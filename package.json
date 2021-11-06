@@ -1,0 +1,17 @@
+{
+	"name": "2gether-bot",
+	"version": "1.0.0",
+	"description": "Multi-purpose Discord bot for the 2GETHER community",
+	"main": "main.js",
+	"scripts": {
+		"start": "node .",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": "https://github.com/2gether-asso/2gether-bot",
+	"author": "Matiboux",
+	"license": "MIT",
+	"dependencies": {
+	},
+	"devDependencies": {
+	}
+}
