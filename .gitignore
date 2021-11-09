@@ -1,2 +1,5 @@
 # NodeJS
 node_modules/
+
+# Project Files
+dist/

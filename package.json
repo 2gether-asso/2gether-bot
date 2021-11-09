@@ -2,16 +2,15 @@
 	"name": "2gether-bot",
 	"version": "1.0.0",
 	"description": "Multi-purpose Discord bot for the 2GETHER community",
-	"main": "main.js",
+	"main": "dist/main.js",
 	"scripts": {
-		"start": "node .",
+		"start": "npx tsc && node .",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": "https://github.com/2gether-asso/2gether-bot",
 	"author": "Matiboux",
 	"license": "MIT",
 	"dependencies": {
-	},
-	"devDependencies": {
+		"typescript": "^4.4.4"
 	}
 }
