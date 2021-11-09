@@ -1,8 +1,9 @@
 import { Bot } from 'discord-mel'
+import path from 'path'
 
 const bot = new Bot({
-	absPath: __dirname,
-	configFile: '../config.json',
+	absPath: path.dirname(__dirname),
+	configFile: './config.json',
 }, {
 	intents: [
 		Bot.Intents.FLAGS.GUILDS,
