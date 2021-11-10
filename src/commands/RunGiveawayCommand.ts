@@ -22,7 +22,7 @@ class RunGiveawayCommand extends AbstractCommand
 	/**
 	 * @param {Discord.Message} message
 	 */
-	async onMessage(message: Discord.Message)
+	async onMessage(message: Discord.Message, args: string)
 	{
 		const repliedToId = message.reference?.messageId
 		if (repliedToId)
@@ -31,7 +31,7 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(repliedTo => repliedTo.fetch())
 				.then(repliedTo =>
 					{
-						this.execute(repliedTo, message.channel as any, message.author)
+						this.execute(repliedTo, message.channel as any, message.author, args)
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
@@ -105,10 +105,11 @@ class RunGiveawayCommand extends AbstractCommand
 	 * @param {Discord.TextBasedChannels} channel
 	 * @param {Discord.User} author
 	 */
-	async execute(repliedTo: Discord.Message, channel: Discord.TextBasedChannels, author: Discord.User)
+	async execute(repliedTo: Discord.Message,
+	              channel: Discord.TextBasedChannels,
+	              author: Discord.User,
+	              emoji?: Discord.MessageReactionResolvable)
 	{
-		const winners = [];
-
 		const options = {
 			title: 'Une chance sur deux !',
 			description: 'Résultats du tirage au sort.',
@@ -116,25 +117,15 @@ class RunGiveawayCommand extends AbstractCommand
 			nbWinners: 1,
 		}
 
-		const reaction = repliedTo.reactions.cache.first()
-
-		/** @type {Collection<string, Discord.User>} */
-		const reactionUsers = reaction ? await reaction.users.fetch() : new Collection()
-
-		if (reactionUsers.size <= options.nbWinners)
-		{
-			reactionUsers.forEach(winner => winners.push(winner))
-		}
-		else
-		{
-			const unselected = reactionUsers.map(user => user)
-			for (let i = 0; i < options.nbWinners; ++i)
-			{
-				const winnerIndex = Math.floor(Math.random() * unselected.length)
-				winners.push(unselected[winnerIndex])
-				unselected.splice(winnerIndex, 1)
-			}
-		}
+		const reaction = emoji
+			? repliedTo.reactions.resolve(emoji)
+			: repliedTo.reactions.cache.first()
+		const participants =
+			await reaction?.users.fetch()
+				.then(users => users.filter(user => !user.bot))
+				.catch(() => undefined)
+			|| new Collection<string, Discord.User>()
+		const winners = participants.random(options.nbWinners)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
@@ -156,8 +147,8 @@ class RunGiveawayCommand extends AbstractCommand
 			embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
 			if (author)
 				embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${author} !`)
-			embed.setFooter(reactionUsers.size > 1
-					? `Merci aux ${reactionUsers.size} participants !`
+			embed.setFooter(participants.size > 1
+					? `Merci aux ${participants.size} participants !`
 					: `Merci à l'unique participant !`)
 
 			// Announce the giveaway winner!
