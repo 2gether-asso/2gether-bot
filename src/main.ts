@@ -1,5 +1,8 @@
 import { Bot } from 'discord-mel'
 import path from 'path'
+import State from './state/State'
+
+Bot.Services.State = State
 
 const bot = new Bot({
 	absPath: path.dirname(__dirname),
@@ -12,19 +15,6 @@ const bot = new Bot({
 	],
 	partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
 })
-
-// State hard storage
-bot.state.dbStructureFix(
-	{
-		giveaways:
-			{
-				wins: {}
-			}
-	})
-	.catch(() =>
-		{
-			throw new Error('State hard storage could not be validated or fixed')
-		})
 
 // Start the bot
 bot.start()
