@@ -14,7 +14,13 @@ interface IStateType
 
 class StateType implements IBaseStateType, IStateType
 {
-    giveaways =
+    giveaways:
+        {
+            wins:
+                {
+                    [x: Snowflake]: number
+                }
+        } =
         {
             wins: {}
         }
