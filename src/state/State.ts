@@ -12,6 +12,12 @@ class State extends BaseState
         super(stateFile, charset)
     }
 
+	get db()
+	{
+		this.accessed = true
+		return this._db
+	}
+
 	async setState(callback: (state: StateType) => void)
 	{
 		callback(this._db)
