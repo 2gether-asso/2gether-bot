@@ -4,11 +4,17 @@ import { ContextMenuCommandBuilder } from '@discordjs/builders'
 import { AbstractCommand, Bot, Discord } from 'discord-mel'
 import Collection = Discord.Collection
 
+import State from '../state/State'
+
 class RunGiveawayCommand extends AbstractCommand
 {
+	_state: State
+
 	constructor(bot: Bot)
 	{
 		super(bot, 'rungiveaway')
+
+		this._state = bot.state as State
 
 		this.description = 'Execute le tirage au sort.'
 
@@ -125,7 +131,44 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(users => users.filter(user => !user.bot))
 				.catch(() => undefined)
 			|| new Collection<string, Discord.User>()
-		const winners = participants.random(options.nbWinners)
+
+		const winners = ((): Discord.User[] =>
+			{
+				const unselected = [...participants.values()]
+
+				const wins = this._state.db.giveaways.wins
+				const sumWins = Object.values(this._state.db.giveaways.wins)
+					.reduce((sum, nbWins) => sum + nbWins, 0)
+
+				if (participants.size <= options.nbWinners)
+				{
+					// All participants are winners
+					return unselected
+				}
+				else
+				{
+					const winners = []
+					for (let i = 0; i < options.nbWinners; ++i)
+					{
+						const winnerIndex = Math.floor(Math.random() * unselected.length)
+						const selectedWinner = unselected[winnerIndex]
+
+						if (Math.floor(Math.random() * sumWins) < wins[selectedWinner.id])
+						{
+							// Redraw
+							--i
+							continue
+						}
+						else
+						{
+							// He is a winner
+							winners.push(...unselected.splice(winnerIndex, 1))
+						}
+					}
+
+					return winners
+				}
+			})()
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
@@ -156,6 +199,16 @@ class RunGiveawayCommand extends AbstractCommand
 					embeds: [embed],
 					reply: { messageReference: repliedTo.id }
 				})
+				.then(() =>
+					{
+						this._state.setState(db =>
+						{
+							winners.forEach(winner =>
+								{
+									db.giveaways.wins[winner.id] = (db.giveaways.wins[winner.id] || 0) + 1
+								})
+						})
+					})
 				.catch(console.error)
 		}
 		else
