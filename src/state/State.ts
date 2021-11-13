@@ -1,5 +1,5 @@
-import { State as BaseState } from "discord-mel";
-import StateType from "./StateType";
+import { State as BaseState } from 'discord-mel'
+import StateType from './StateType'
 
 class State extends BaseState
 {
@@ -11,6 +11,16 @@ class State extends BaseState
 	{
         super(stateFile, charset)
     }
+
+	async setState(callback: (state: StateType) => void)
+	{
+		callback(this._db)
+
+		// Save changes
+		this.accessed = true
+		if (this.stateFile)
+			this.save()
+	}
 }
 
 export default State
