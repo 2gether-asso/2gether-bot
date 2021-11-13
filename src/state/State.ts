@@ -1,37 +1,17 @@
-import { BaseState } from 'discord-mel'
+import { AbstractState } from 'discord-mel'
 import StateType from './StateType'
 
-class State extends BaseState
+class State extends AbstractState<StateType, StateType>
 {
-	_db!: StateType
-
-	js!: StateType
-
 	constructor(stateFile?: string, charset: BufferEncoding = 'utf8')
 	{
-        super(stateFile, charset)
-    }
+		super(stateFile, charset)
+	}
 
-	protected initProperties()
+	protected initProperties(): void
 	{
 		this._db = new StateType()
 		this.js = new StateType()
-	}
-
-	get db()
-	{
-		this.accessed = true
-		return this._db
-	}
-
-	async setState(callback: (state: StateType) => void)
-	{
-		callback(this._db)
-
-		// Save changes
-		this.accessed = true
-		if (this.stateFile)
-			this.save()
 	}
 }
 
