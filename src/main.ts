@@ -10,6 +10,7 @@ const bot = new Bot(
 	{
 		absPath: path.dirname(__dirname),
 		configFile: './config.json',
+		logFile: './log.txt',
 	},
 	{
 		intents:
