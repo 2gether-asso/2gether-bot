@@ -41,13 +41,13 @@ class RunGiveawayCommand extends AbstractCommand
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
-									console.error(error)
+									this.logger.warn(error)
 								})
 					})
 				.catch(error =>
 					{
 						message.reply('Failed to fetch the giveaway message.')
-						console.error(error)
+						this.logger.warn(error)
 					})
 
 			// Delete user command
@@ -79,7 +79,7 @@ class RunGiveawayCommand extends AbstractCommand
 											content: 'Failed to execute the command.',
 											ephemeral: true,
 										})
-									console.error(error)
+									this.logger.warn(error)
 								})
 					})
 				.catch(error =>
@@ -88,7 +88,7 @@ class RunGiveawayCommand extends AbstractCommand
 								content: 'Failed to fetch the giveaway message.',
 								ephemeral: true,
 							})
-						console.error(error)
+						this.logger.warn(error)
 					})
 
 				interaction.reply({
@@ -209,7 +209,7 @@ class RunGiveawayCommand extends AbstractCommand
 								})
 						})
 					})
-				.catch(console.error)
+				.catch(this.logger.warn)
 		}
 		else
 		{
@@ -219,7 +219,7 @@ class RunGiveawayCommand extends AbstractCommand
 			channel.send({ content,
 					reply: { messageReference: repliedTo.id }
 				})
-				.catch(console.error)
+				.catch(this.logger.warn)
 		}
 	}
 
