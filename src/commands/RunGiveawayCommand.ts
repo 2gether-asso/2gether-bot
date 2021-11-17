@@ -156,12 +156,14 @@ class RunGiveawayCommand extends AbstractCommand
 						if (Math.floor(Math.random() * sumWins) < wins[selectedWinner.id])
 						{
 							// Redraw
+							this.logger.debug(`Redrawing ${selectedWinner.username}`)
 							--i
 							continue
 						}
 						else
 						{
 							// He is a winner
+							this.logger.info(`${selectedWinner.username} won the giveaway ${repliedTo.id}`)
 							winners.push(...unselected.splice(winnerIndex, 1))
 						}
 					}
@@ -169,6 +171,7 @@ class RunGiveawayCommand extends AbstractCommand
 					return winners
 				}
 			})()
+		this.logger.debug(`${winners.length} winners out of ${participants.size} participants on the giveaway ${repliedTo.id}`)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
