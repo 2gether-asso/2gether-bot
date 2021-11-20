@@ -213,7 +213,9 @@ class RunGiveawayCommand extends AbstractCommand
 						{
 							winners.forEach(winner =>
 								{
-									db.giveaways.wins[winner.id] = (db.giveaways.wins[winner.id] || 0) + 1
+									const wins = (db.giveaways.wins[winner.id] || 0) + 1
+									db.giveaways.wins[winner.id] = wins
+									this.logger.debug(`${winner} now has ${wins} wins`, this.name)
 								})
 						})
 					})
