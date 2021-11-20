@@ -142,7 +142,7 @@ class RunGiveawayCommand extends AbstractCommand
 
 				if (participants.size <= options.nbWinners)
 				{
-					// All participants are winners
+					this.logger.debug(`All participants won the giveaway ${repliedTo.id}`)
 					return unselected
 				}
 				else
