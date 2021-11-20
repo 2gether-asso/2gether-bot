@@ -140,6 +140,11 @@ class RunGiveawayCommand extends AbstractCommand
 				const sumWins = Object.values(this._state.db.giveaways.wins)
 					.reduce((sum, nbWins) => sum + nbWins, 0)
 
+				if (participants.size <= 0)
+				{
+					this.logger.debug(`Nobody won the giveaway ${repliedTo.id}`, this.name)
+					return []
+				}
 				if (participants.size <= options.nbWinners)
 				{
 					this.logger.debug(`All participants won the giveaway ${repliedTo.id}`, this.name)
