@@ -41,13 +41,13 @@ class RunGiveawayCommand extends AbstractCommand
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
-									this.logger.warn(error, this.name)
+									this.logger.warn(error, `${this.name}:${repliedToId}`)
 								})
 					})
 				.catch(error =>
 					{
 						message.reply('Failed to fetch the giveaway message.')
-						this.logger.warn(error, this.name)
+						this.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 
 			// Delete user command
@@ -79,7 +79,7 @@ class RunGiveawayCommand extends AbstractCommand
 											content: 'Failed to execute the command.',
 											ephemeral: true,
 										})
-									this.logger.warn(error, this.name)
+									this.logger.warn(error, `${this.name}:${repliedToId}`)
 								})
 					})
 				.catch(error =>
@@ -88,7 +88,7 @@ class RunGiveawayCommand extends AbstractCommand
 								content: 'Failed to fetch the giveaway message.',
 								ephemeral: true,
 							})
-						this.logger.warn(error, this.name)
+						this.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 
 				interaction.reply({
@@ -142,12 +142,12 @@ class RunGiveawayCommand extends AbstractCommand
 
 				if (participants.size <= 0)
 				{
-					this.logger.debug(`Nobody won the giveaway ${repliedTo.id}`, this.name)
+					this.logger.debug(`Nobody won`, `${this.name}:${repliedTo.id}`)
 					return []
 				}
 				if (participants.size <= options.nbWinners)
 				{
-					this.logger.debug(`All participants won the giveaway ${repliedTo.id}`, this.name)
+					this.logger.debug(`All participants won`, `${this.name}:${repliedTo.id}`)
 					return unselected
 				}
 				else
@@ -161,14 +161,14 @@ class RunGiveawayCommand extends AbstractCommand
 						if (Math.floor(Math.random() * sumWins) < wins[selectedWinner.id])
 						{
 							// Redraw
-							this.logger.debug(`Redrawing ${selectedWinner.username}`, this.name)
+							this.logger.debug(`Redrawing ${selectedWinner.username}`, `${this.name}:${repliedTo.id}`)
 							--i
 							continue
 						}
 						else
 						{
 							// He is a winner
-							this.logger.info(`${selectedWinner.username} won the giveaway ${repliedTo.id}`, this.name)
+							this.logger.info(`${selectedWinner.username} won`, `${this.name}:${repliedTo.id}`)
 							winners.push(...unselected.splice(winnerIndex, 1))
 						}
 					}
@@ -176,7 +176,7 @@ class RunGiveawayCommand extends AbstractCommand
 					return winners
 				}
 			}).call(this)
-		this.logger.debug(`${winners.length} winners out of ${participants.size} participants on the giveaway ${repliedTo.id}`, this.name)
+		this.logger.debug(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
@@ -215,11 +215,11 @@ class RunGiveawayCommand extends AbstractCommand
 								{
 									const wins = (db.giveaways.wins[winner.id] || 0) + 1
 									db.giveaways.wins[winner.id] = wins
-									this.logger.debug(`${winner} now has ${wins} wins`, this.name)
+									this.logger.debug(`${winner} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
 								})
 						})
 					})
-				.catch(error => this.logger.warn(error, this.name))
+				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
 		else
 		{
@@ -229,7 +229,7 @@ class RunGiveawayCommand extends AbstractCommand
 			channel.send({ content,
 					reply: { messageReference: repliedTo.id }
 				})
-				.catch(error => this.logger.warn(error, this.name))
+				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
 	}
 
