@@ -8,21 +8,38 @@ import State from '../state/State'
 
 class RunGiveawayCommand extends AbstractCommand
 {
-	_state: State
-
 	constructor(bot: Bot)
 	{
 		super(bot, 'rungiveaway')
 
-		this._state = bot.state as State
-
 		this.description = 'Execute le tirage au sort.'
+
+		// Legacy commands aliases
+		// this.commandAliases.add('rungiveaway')
+
+		// Application commands
+		this.applicationCommands.push(
+			(() => {
+				const applicationCommand = new ContextMenuCommandBuilder()
+				applicationCommand.setName(this.name)
+				applicationCommand.setType(ApplicationCommandType.Message)
+
+				return applicationCommand
+			})()
+		)
+
+		this.componentIds.add(`${this.name}:select_emoji`)
 
 		this.guildOnly = true
 		this.permissions = ['ADMINISTRATOR']
 
 		// this.cooldown = 5
 		// this.slash = true
+	}
+
+	protected get state(): State
+	{
+		return super.state as State
 	}
 
 	/**
@@ -37,17 +54,21 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(repliedTo => repliedTo.fetch())
 				.then(repliedTo =>
 					{
-						this.execute(repliedTo, message.channel as any, message.author, args)
+						const reaction = (
+								args ? repliedTo.reactions.resolve(args)
+								     : repliedTo.reactions.cache.first()
+							) || undefined
+						this.execute(repliedTo, message.channel, message.author, reaction)
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
-									console.error(error)
+									this.logger.warn(error, `${this.name}:${repliedToId}`)
 								})
 					})
 				.catch(error =>
 					{
 						message.reply('Failed to fetch the giveaway message.')
-						console.error(error)
+						this.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 
 			// Delete user command
@@ -59,11 +80,11 @@ class RunGiveawayCommand extends AbstractCommand
 		}
 	}
 
-	/**
-	 * @param {Discord.ContextMenuInteraction} interaction
-	 */
-	async onInteraction(interaction: Discord.ContextMenuInteraction)
+	async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
 	{
+		if (!interaction.isContextMenu())
+			return
+
 		const channel = interaction.channel
 		const repliedToId = interaction?.targetId
 		if (channel && repliedToId)
@@ -72,15 +93,48 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(repliedTo => repliedTo.fetch())
 				.then(repliedTo =>
 					{
-						this.execute(repliedTo, channel as any, interaction.user)
-							.catch(error =>
-								{
-									interaction.reply({
-											content: 'Failed to execute the command.',
-											ephemeral: true,
-										})
-									console.error(error)
+						if (repliedTo.reactions.cache.size >= 2)
+						{
+							interaction.reply({
+									content: 'Quelle reaction est liée au giveaway ?',
+									components: [
+										new Discord.MessageActionRow()
+											.addComponents(
+												new Discord.MessageSelectMenu()
+													.setCustomId(`${this.name}:select_emoji`)
+													.setPlaceholder('Nothing selected')
+													.addOptions(
+														repliedTo.reactions.cache.map((reaction, key) =>
+															({
+																label: reaction.emoji.name || key,
+																value: `${repliedToId}:${reaction.emoji.id || key}`
+															})
+														))
+											)
+									],
+									ephemeral: true,
 								})
+							this.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)						}
+						else
+						{
+							const reaction = repliedTo.reactions.cache.first()
+							this.execute(repliedTo, channel, interaction.user, reaction)
+								.then(() =>
+									{
+										interaction.reply({
+												content: 'Done!',
+												ephemeral: true,
+											})
+									})
+								.catch(error =>
+									{
+										interaction.reply({
+												content: 'Failed to execute the command.',
+												ephemeral: true,
+											})
+										this.logger.warn(error, `${this.name}:${repliedToId}`)
+									})
+						}
 					})
 				.catch(error =>
 					{
@@ -88,12 +142,7 @@ class RunGiveawayCommand extends AbstractCommand
 								content: 'Failed to fetch the giveaway message.',
 								ephemeral: true,
 							})
-						console.error(error)
-					})
-
-				interaction.reply({
-						content: 'Done!',
-						ephemeral: true,
+						this.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 		}
 		else
@@ -102,6 +151,69 @@ class RunGiveawayCommand extends AbstractCommand
 					content: 'Please reply to the giveaway message when executing this command.',
 					ephemeral: true,
 				})
+		}
+	}
+
+	async onComponentInteraction(interaction: Discord.MessageComponentInteraction)
+	{
+		if (!interaction.isSelectMenu())
+			return
+
+		if (interaction.customId === `${this.name}:select_emoji`)
+		{
+			if (interaction.values.length === 1)
+			{
+				const channel = interaction.channel
+				const [ repliedToId, emojiId ] = interaction.values[0].split(':')
+				if (channel && repliedToId)
+				{
+					await channel.messages.fetch(repliedToId)
+						.then(repliedTo => repliedTo.fetch())
+						.then(repliedTo =>
+							{
+								const reaction = repliedTo.reactions.resolve(emojiId) || undefined
+								this.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
+								this.execute(repliedTo, channel, interaction.user, reaction)
+									.then(() =>
+										{
+											interaction.update({
+													content: 'Done!',
+													components: [],
+												})
+										})
+									.catch(error =>
+										{
+											interaction.reply({
+													content: 'Failed to execute the command.',
+													ephemeral: true,
+												})
+											this.logger.warn(error, `${this.name}:${repliedToId}`)
+										})
+							})
+						.catch(error =>
+							{
+								interaction.reply({
+										content: 'Failed to fetch the giveaway message.',
+										ephemeral: true,
+									})
+								this.logger.warn(error, `${this.name}:${repliedToId}`)
+							})
+				}
+				else
+				{
+					interaction.reply({
+							content: 'Please reply to the giveaway message when executing this command.',
+							ephemeral: true,
+						})
+				}
+			}
+			else
+			{
+				interaction.reply({
+						content: `You must select only one value`,
+						ephemeral: true,
+					})
+			}
 		}
 	}
 
@@ -114,7 +226,8 @@ class RunGiveawayCommand extends AbstractCommand
 	async execute(repliedTo: Discord.Message,
 	              channel: Discord.TextBasedChannels,
 	              author: Discord.User,
-	              emoji?: Discord.MessageReactionResolvable)
+	            //   emoji?: Discord.MessageReactionResolvable,
+				  reaction?: Discord.MessageReaction)
 	{
 		const options = {
 			title: 'Une chance sur deux !',
@@ -123,9 +236,9 @@ class RunGiveawayCommand extends AbstractCommand
 			nbWinners: 1,
 		}
 
-		const reaction = emoji
-			? repliedTo.reactions.resolve(emoji)
-			: repliedTo.reactions.cache.first()
+		// const reaction = emoji
+		// 	? repliedTo.reactions.resolve(emoji)
+		// 	: repliedTo.reactions.cache.first()
 		const participants =
 			await reaction?.users.fetch()
 				.then(users => users.filter(user => !user.bot))
@@ -136,13 +249,18 @@ class RunGiveawayCommand extends AbstractCommand
 			{
 				const unselected = [...participants.values()]
 
-				const wins = this._state.db.giveaways.wins
-				const sumWins = Object.values(this._state.db.giveaways.wins)
+				const wins = this.state.db.giveaways.wins
+				const sumWins = Object.values(wins)
 					.reduce((sum, nbWins) => sum + nbWins, 0)
 
+				if (participants.size <= 0)
+				{
+					this.logger.debug(`Nobody won`, `${this.name}:${repliedTo.id}`)
+					return []
+				}
 				if (participants.size <= options.nbWinners)
 				{
-					// All participants are winners
+					this.logger.debug(`All participants won`, `${this.name}:${repliedTo.id}`)
 					return unselected
 				}
 				else
@@ -156,19 +274,22 @@ class RunGiveawayCommand extends AbstractCommand
 						if (Math.floor(Math.random() * sumWins) < wins[selectedWinner.id])
 						{
 							// Redraw
+							this.logger.debug(`Redrawing ${selectedWinner.username}`, `${this.name}:${repliedTo.id}`)
 							--i
 							continue
 						}
 						else
 						{
 							// He is a winner
+							this.logger.debug(`${selectedWinner.username} won`, `${this.name}:${repliedTo.id}`)
 							winners.push(...unselected.splice(winnerIndex, 1))
 						}
 					}
 
 					return winners
 				}
-			})()
+			}).call(this)
+		this.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
@@ -201,15 +322,17 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 				.then(() =>
 					{
-						this._state.setState(db =>
+						this.state.setState(db =>
 						{
 							winners.forEach(winner =>
 								{
-									db.giveaways.wins[winner.id] = (db.giveaways.wins[winner.id] || 0) + 1
+									const wins = (db.giveaways.wins[winner.id] || 0) + 1
+									db.giveaways.wins[winner.id] = wins
+									this.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
 								})
 						})
 					})
-				.catch(console.error)
+				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
 		else
 		{
@@ -219,17 +342,8 @@ class RunGiveawayCommand extends AbstractCommand
 			channel.send({ content,
 					reply: { messageReference: repliedTo.id }
 				})
-				.catch(console.error)
+				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
-	}
-
-	getApplicationCommand()
-	{
-		const applicationCommand = new ContextMenuCommandBuilder()
-		applicationCommand.setName(this.name)
-		applicationCommand.setType(ApplicationCommandType.Message)
-
-		return applicationCommand
 	}
 }
 
