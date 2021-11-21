@@ -250,7 +250,7 @@ class RunGiveawayCommand extends AbstractCommand
 				const unselected = [...participants.values()]
 
 				const wins = this.state.db.giveaways.wins
-				const sumWins = Object.values(this.state.db.giveaways.wins)
+				const sumWins = Object.values(wins)
 					.reduce((sum, nbWins) => sum + nbWins, 0)
 
 				if (participants.size <= 0)
