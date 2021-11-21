@@ -3,7 +3,7 @@ import { AbstractCommand, Bot, Discord } from 'discord-mel'
 
 class PingCommand extends AbstractCommand
 {
-	constructor(bot?: Bot)
+	constructor(bot: Bot)
 	{
 		super(bot, 'ping')
 
