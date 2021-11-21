@@ -30,7 +30,7 @@ class PingCommand extends AbstractCommand
 		message.reply(this.translator.translate('ping.pong'))
 	}
 
-	async onInteraction(interaction: Discord.CommandInteraction)
+	async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
 	{
 		interaction.reply(this.translator.translate('ping.pong'))
 	}
