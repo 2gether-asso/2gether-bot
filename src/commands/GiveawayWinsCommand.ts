@@ -5,13 +5,9 @@ import State from '../state/State'
 
 class GiveawayWinsCommand extends AbstractCommand
 {
-	_state: State
-
 	constructor(bot: Bot)
 	{
 		super(bot, 'giveawaywins')
-
-		this._state = bot.state as State
 
 		this.description = 'Affiche le nombre de victoire d\'un utilisateur.'
 
@@ -31,10 +27,15 @@ class GiveawayWinsCommand extends AbstractCommand
 		this.guildOnly = true
 	}
 
-	async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
+	protected get state(): State
 	{
-		const nbWins = this._state.db.giveaways.wins[interaction.user.id]
-		const sumWins = Object.values(this._state.db.giveaways.wins)
+		return super.state as State
+	}
+
+	async onCommandInteraction(interaction: Discord.BaseCommandInteraction): Promise<void>
+	{
+		const nbWins = this.state.db.giveaways.wins[interaction.user.id]
+		const sumWins = Object.values(this.state.db.giveaways.wins)
 			.reduce((sum, nbWins) => sum + nbWins, 0)
 
 		interaction.reply({
