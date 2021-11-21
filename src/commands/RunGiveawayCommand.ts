@@ -163,11 +163,6 @@ class RunGiveawayCommand extends AbstractCommand
 		{
 			if (interaction.values.length === 1)
 			{
-				// interaction.reply({
-				// 		content: `You selected ${emojiId} for ${repliedToId}\n`,
-				// 		ephemeral: true,
-				// 	})
-
 				const channel = interaction.channel
 				const [ repliedToId, emojiId ] = interaction.values[0].split(':')
 				if (channel && repliedToId)
@@ -180,9 +175,9 @@ class RunGiveawayCommand extends AbstractCommand
 								this.execute(repliedTo, channel, interaction.user, reaction)
 									.then(() =>
 										{
-											interaction.reply({
+											interaction.update({
 													content: 'Done!',
-													ephemeral: true,
+													components: [],
 												})
 										})
 									.catch(error =>
