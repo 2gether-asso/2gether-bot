@@ -10,7 +10,7 @@ class PingCommand extends AbstractCommand
 		this.description = this.translator.translate('ping.description')
 
 		// Legacy commands aliases
-		this.commandAliases.add('ping')
+		// this.commandAliases.add('ping')
 
 		// Application commands
 		this.applicationCommands.push(
