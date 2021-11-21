@@ -19,7 +19,7 @@ class RunGiveawayCommand extends AbstractCommand
 		this.description = 'Execute le tirage au sort.'
 
 		// Legacy commands aliases
-		this.commandAliases.add('rungiveaway')
+		// this.commandAliases.add('rungiveaway')
 
 		// Application commands
 		this.applicationCommands.push(
