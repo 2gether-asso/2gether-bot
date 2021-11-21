@@ -113,8 +113,7 @@ class RunGiveawayCommand extends AbstractCommand
 									],
 									ephemeral: true,
 								})
-							// this.logger.warn('', `${this.name}:${repliedToId}`)
-						}
+							this.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)						}
 						else
 						{
 							const reaction = repliedTo.reactions.cache.first()
@@ -172,6 +171,7 @@ class RunGiveawayCommand extends AbstractCommand
 						.then(repliedTo =>
 							{
 								const reaction = repliedTo.reactions.resolve(emojiId) || undefined
+								this.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
 								this.execute(repliedTo, channel, interaction.user, reaction)
 									.then(() =>
 										{
@@ -280,7 +280,7 @@ class RunGiveawayCommand extends AbstractCommand
 						else
 						{
 							// He is a winner
-							this.logger.info(`${selectedWinner.username} won`, `${this.name}:${repliedTo.id}`)
+							this.logger.debug(`${selectedWinner.username} won`, `${this.name}:${repliedTo.id}`)
 							winners.push(...unselected.splice(winnerIndex, 1))
 						}
 					}
@@ -288,7 +288,7 @@ class RunGiveawayCommand extends AbstractCommand
 					return winners
 				}
 			}).call(this)
-		this.logger.debug(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
+		this.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
