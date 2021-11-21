@@ -215,7 +215,7 @@ class RunGiveawayCommand extends AbstractCommand
 								{
 									const wins = (db.giveaways.wins[winner.id] || 0) + 1
 									db.giveaways.wins[winner.id] = wins
-									this.logger.debug(`${winner} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
+									this.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
 								})
 						})
 					})
