@@ -18,6 +18,20 @@ class RunGiveawayCommand extends AbstractCommand
 
 		this.description = 'Execute le tirage au sort.'
 
+		// Legacy commands aliases
+		this.commandAliases.add('rungiveaway')
+
+		// Application commands
+		this.applicationCommands.push(
+			(() => {
+				const applicationCommand = new ContextMenuCommandBuilder()
+				applicationCommand.setName(this.name)
+				applicationCommand.setType(ApplicationCommandType.Message)
+
+				return applicationCommand
+			})()
+		)
+
 		this.guildOnly = true
 		this.permissions = ['ADMINISTRATOR']
 
@@ -231,15 +245,6 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
-	}
-
-	getApplicationCommand()
-	{
-		const applicationCommand = new ContextMenuCommandBuilder()
-		applicationCommand.setName(this.name)
-		applicationCommand.setType(ApplicationCommandType.Message)
-
-		return applicationCommand
 	}
 }
 
