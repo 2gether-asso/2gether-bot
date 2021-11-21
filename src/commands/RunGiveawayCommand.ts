@@ -51,7 +51,11 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(repliedTo => repliedTo.fetch())
 				.then(repliedTo =>
 					{
-						this.execute(repliedTo, message.channel as any, message.author, args)
+						const reaction = (
+								args ? repliedTo.reactions.resolve(args)
+								     : repliedTo.reactions.cache.first()
+							) || undefined
+						this.execute(repliedTo, message.channel, message.author, reaction)
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
@@ -86,7 +90,8 @@ class RunGiveawayCommand extends AbstractCommand
 				.then(repliedTo => repliedTo.fetch())
 				.then(repliedTo =>
 					{
-						this.execute(repliedTo, channel as any, interaction.user)
+						const reaction = repliedTo.reactions.cache.first()
+						this.execute(repliedTo, channel, interaction.user, reaction)
 							.catch(error =>
 								{
 									interaction.reply({
@@ -128,7 +133,8 @@ class RunGiveawayCommand extends AbstractCommand
 	async execute(repliedTo: Discord.Message,
 	              channel: Discord.TextBasedChannels,
 	              author: Discord.User,
-	              emoji?: Discord.MessageReactionResolvable)
+	            //   emoji?: Discord.MessageReactionResolvable,
+				  reaction?: Discord.MessageReaction)
 	{
 		const options = {
 			title: 'Une chance sur deux !',
@@ -137,9 +143,9 @@ class RunGiveawayCommand extends AbstractCommand
 			nbWinners: 1,
 		}
 
-		const reaction = emoji
-			? repliedTo.reactions.resolve(emoji)
-			: repliedTo.reactions.cache.first()
+		// const reaction = emoji
+		// 	? repliedTo.reactions.resolve(emoji)
+		// 	: repliedTo.reactions.cache.first()
 		const participants =
 			await reaction?.users.fetch()
 				.then(users => users.filter(user => !user.bot))
