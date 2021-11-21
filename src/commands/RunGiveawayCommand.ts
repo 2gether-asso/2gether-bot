@@ -92,6 +92,13 @@ class RunGiveawayCommand extends AbstractCommand
 					{
 						const reaction = repliedTo.reactions.cache.first()
 						this.execute(repliedTo, channel, interaction.user, reaction)
+							.then(() =>
+								{
+									interaction.reply({
+											content: 'Done!',
+											ephemeral: true,
+										})
+								})
 							.catch(error =>
 								{
 									interaction.reply({
@@ -108,11 +115,6 @@ class RunGiveawayCommand extends AbstractCommand
 								ephemeral: true,
 							})
 						this.logger.warn(error, `${this.name}:${repliedToId}`)
-					})
-
-				interaction.reply({
-						content: 'Done!',
-						ephemeral: true,
 					})
 		}
 		else
