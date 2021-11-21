@@ -8,13 +8,9 @@ import State from '../state/State'
 
 class RunGiveawayCommand extends AbstractCommand
 {
-	_state: State
-
 	constructor(bot: Bot)
 	{
 		super(bot, 'rungiveaway')
-
-		this._state = bot.state as State
 
 		this.description = 'Execute le tirage au sort.'
 
@@ -39,6 +35,11 @@ class RunGiveawayCommand extends AbstractCommand
 
 		// this.cooldown = 5
 		// this.slash = true
+	}
+
+	protected get state(): State
+	{
+		return super.state as State
 	}
 
 	/**
@@ -248,8 +249,8 @@ class RunGiveawayCommand extends AbstractCommand
 			{
 				const unselected = [...participants.values()]
 
-				const wins = this._state.db.giveaways.wins
-				const sumWins = Object.values(this._state.db.giveaways.wins)
+				const wins = this.state.db.giveaways.wins
+				const sumWins = Object.values(this.state.db.giveaways.wins)
 					.reduce((sum, nbWins) => sum + nbWins, 0)
 
 				if (participants.size <= 0)
@@ -321,7 +322,7 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 				.then(() =>
 					{
-						this._state.setState(db =>
+						this.state.setState(db =>
 						{
 							winners.forEach(winner =>
 								{
