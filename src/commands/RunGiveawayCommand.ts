@@ -245,50 +245,8 @@ class RunGiveawayCommand extends AbstractCommand
 				.catch(() => undefined)
 			|| new Collection<string, Discord.User>()
 
-		const winners = ((): Discord.User[] =>
-			{
-				const unselected = [...participants.values()]
-
-				const wins = this.state.db.giveaways.wins
-				const sumWins = Object.values(wins)
-					.reduce((sum, nbWins) => sum + nbWins, 0)
-
-				if (participants.size <= 0)
-				{
-					this.logger.debug(`Nobody won`, `${this.name}:${repliedTo.id}`)
-					return []
-				}
-				if (participants.size <= options.nbWinners)
-				{
-					this.logger.debug(`All participants won`, `${this.name}:${repliedTo.id}`)
-					return unselected
-				}
-				else
-				{
-					const winners = []
-					for (let i = 0; i < options.nbWinners; ++i)
-					{
-						const winnerIndex = Math.floor(Math.random() * unselected.length)
-						const selectedWinner = unselected[winnerIndex]
-
-						if (Math.floor(Math.random() * sumWins) < wins[selectedWinner.id])
-						{
-							// Redraw
-							this.logger.debug(`Redrawing ${selectedWinner.username}`, `${this.name}:${repliedTo.id}`)
-							--i
-							continue
-						}
-						else
-						{
-							// He is a winner
-							this.logger.debug(`${selectedWinner.username} won`, `${this.name}:${repliedTo.id}`)
-							winners.push(...unselected.splice(winnerIndex, 1))
-						}
-					}
-
-					return winners
-				}
-			}).call(this)
+		this.logger.debug(`Trying to draw ${options.nbWinners} winners`, `${this.name}:${repliedTo.id}`)
+		const winners = participants.random(options.nbWinners)
 		this.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
 
 		let content = `Le giveaway`
