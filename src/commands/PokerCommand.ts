@@ -26,8 +26,7 @@ class PokerCommand extends AbstractCommand
 	{
 		if (interaction.member instanceof Discord.GuildMember)
 		{
-			const member = interaction.member
-			const voiceChannel = member.voice.channel
+			const voiceChannel = interaction.member.voice.channel
 			const textChannel = interaction.channel
 
 			if (!voiceChannel)
@@ -51,12 +50,12 @@ class PokerCommand extends AbstractCommand
 					.then(async (invite: { code: any }) =>
 						{
 							const embed = new Discord.MessageEmbed()
-							embed.setTitle('YouTube Together')
+							embed.setTitle('Poker')
 							embed.setURL(invite.code)
 							embed.setColor('#c0c0c0')
 							embed.setDescription('Cliquez sur le lien pour rejoindre !')
 							if (interaction.guild)
-								embed.setFooter(`in ${interaction.guild.name}`)
+								embed.setFooter(`sur ${interaction.guild.name}`)
 
 							return textChannel.send({
 									content: `<${invite.code}>`,

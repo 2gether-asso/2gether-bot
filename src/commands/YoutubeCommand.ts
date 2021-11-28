@@ -26,10 +26,10 @@ class YoutubeCommand extends AbstractCommand
 	{
 		if (interaction.member instanceof Discord.GuildMember)
 		{
-			const member = interaction.member
+			const voiceChannel = interaction.member.voice.channel
 			const channel = interaction.channel
 
-			if (!interaction.member.voice.channel)
+			if (!voiceChannel)
 			{
 				interaction.reply({
 					content: 'You must be connected to a voice channel so that I can join you.',
@@ -46,7 +46,7 @@ class YoutubeCommand extends AbstractCommand
 			else
 			{
 				this.bot.config.discordTogether
-					.createTogetherCode(interaction.member.voice.channel.id, 'youtube')
+					.createTogetherCode(voiceChannel.id, 'youtube')
 					.then(async (invite: { code: any }) =>
 						{
 							const embed = new Discord.MessageEmbed()
@@ -55,7 +55,7 @@ class YoutubeCommand extends AbstractCommand
 							embed.setColor('#f02020')
 							embed.setDescription('Cliquez sur le lien pour rejoindre !')
 							if (interaction.guild)
-								embed.setFooter(`in ${interaction.guild.name}`)
+								embed.setFooter(`sur ${interaction.guild.name}`)
 
 							return channel.send({
 									content: `<${invite.code}>`,
