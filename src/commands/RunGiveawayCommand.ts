@@ -32,9 +32,6 @@ class RunGiveawayCommand extends AbstractCommand
 
 		this.guildOnly = true
 		this.permissions = ['ADMINISTRATOR']
-
-		// this.cooldown = 5
-		// this.slash = true
 	}
 
 	protected get state(): State
@@ -226,7 +223,6 @@ class RunGiveawayCommand extends AbstractCommand
 	async execute(repliedTo: Discord.Message,
 	              channel: Discord.TextBasedChannels,
 	              author: Discord.User,
-	            //   emoji?: Discord.MessageReactionResolvable,
 				  reaction?: Discord.MessageReaction)
 	{
 		const options = {
@@ -236,9 +232,6 @@ class RunGiveawayCommand extends AbstractCommand
 			nbWinners: 1,
 		}
 
-		// const reaction = emoji
-		// 	? repliedTo.reactions.resolve(emoji)
-		// 	: repliedTo.reactions.cache.first()
 		const participants =
 			await reaction?.users.fetch()
 				.then(users => users.filter(user => !user.bot))
