@@ -19,10 +19,15 @@ class StateType implements IBaseStateType, IStateType
             wins:
                 {
                     [x: Snowflake]: number
-                }
+                },
+            participations:
+                {
+                    [x: Snowflake]: number
+                },
         } =
         {
-            wins: {}
+            wins: {},
+            participations: {},
         }
 }
 

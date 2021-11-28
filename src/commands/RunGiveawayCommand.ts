@@ -275,8 +275,17 @@ class RunGiveawayCommand extends AbstractCommand
 					{
 						this.state.setState(db =>
 						{
+							participants.forEach(participant =>
+								{
+									// Save participations
+									const participations = (db.giveaways.participations[participant.id] || 0) + 1
+									db.giveaways.participations[participant.id] = participations
+									this.logger.debug(`${participant.username} now has ${participations} participations`, `${this.name}:${repliedTo.id}`)
+								})
+
 							winners.forEach(winner =>
 								{
+									// Save wins
 									const wins = (db.giveaways.wins[winner.id] || 0) + 1
 									db.giveaways.wins[winner.id] = wins
 									this.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
