@@ -8,7 +8,11 @@ interface IStateType
             wins:
                 {
                     [x: Snowflake]: number
-                }
+                },
+            participations:
+                {
+                    [x: Snowflake]: number
+                },
         }
 }
 
@@ -18,11 +22,11 @@ class StateType implements IBaseStateType, IStateType
         {
             wins:
                 {
-                    [x: Snowflake]: number
+                    [x: Snowflake]: number,
                 },
             participations:
                 {
-                    [x: Snowflake]: number
+                    [x: Snowflake]: number,
                 },
         } =
         {
