@@ -1,5 +1,5 @@
 import { IBaseStateType } from 'discord-mel'
-import Giveaways from './Giveaways'
+import Giveaways from './types/Giveaways'
 
 class StateType implements IBaseStateType
 {
