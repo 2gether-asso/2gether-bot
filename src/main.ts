@@ -3,7 +3,9 @@ import path from 'path'
 import { Bot } from 'discord-mel'
 
 import State from './state/State'
+import Config from './config/Config'
 
+Bot.Services.Config = Config
 Bot.Services.State = State
 
 const bot = new Bot(
