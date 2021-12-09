@@ -1,10 +1,13 @@
 import { DefaultConfig } from 'discord-mel'
+import Activity from './types/Activity'
 
 class Config extends DefaultConfig
 {
-	constructor(configFile?: string, charset: BufferEncoding = 'utf8')
+	public activity: Activity = new Activity()
+
+	constructor()
 	{
-		super(configFile, charset)
+		super()
 	}
 }
 
