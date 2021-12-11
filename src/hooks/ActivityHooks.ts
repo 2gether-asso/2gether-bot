@@ -1,6 +1,7 @@
 import { Mel, Discord, HooksManager, Translator } from 'discord-mel'
 import Logger from 'discord-mel/dist/logger/Logger'
 import Config from '../config/Config'
+import Activity from '../config/types/Activity'
 import State from '../state/State'
 import { UserActivityCooldown } from '../state/types/UserActivity'
 
@@ -41,10 +42,13 @@ class ActivityHooks
 		// Ignore messages without content
 		if (!message.content) return
 
-		const delta = this.config.activity.rewards['message']
+		// Get the guild's activity config
+		const activityConfig = this.config.getGuildConfig(guild.id).activity
+
+		const delta = activityConfig.rewards['message']
 
 		this.logger.debug(`Message activity for ${member.user.username}`, 'ActivityHooks')
-		this.addUserActivity(member, delta, 'message')
+		this.addUserActivity(member, delta, activityConfig, 'message')
 	}
 
 	private async onVoiceStateUpdate(oldState: Discord.VoiceState,
@@ -69,6 +73,10 @@ class ActivityHooks
 			return
 		}
 
+		// Get the guild's activity config
+		const guild = newState.guild
+		const activityConfig = this.config.getGuildConfig(guild.id).activity
+
 		// Get user activity (or initialize it)
 		const userActivity = this.state.db.activities.getUser(member.id)
 
@@ -77,20 +85,21 @@ class ActivityHooks
 		{
 			// Calculate the score for the session
 			const timeSeconds = (Date.now() - userActivity.voiceSince) / 1000
-			const delta = (timeSeconds / this.config.activity.cooldown)
-			              * this.config.activity.rewards.voice
+			const delta = (timeSeconds / activityConfig.cooldown)
+			              * activityConfig.rewards.voice
 
 			// Ends the session (avoid bugs)
 			userActivity.voiceSince = -1
 
 			// Rewards the member for the session
 			this.logger.debug(`${member.user.username}: Voice activity ends after ${timeSeconds} seconds`, 'ActivityHooks')
-			this.addUserActivity(member, delta)
+			this.addUserActivity(member, delta, activityConfig)
 		}
 	}
 
 	private async addUserActivity(member: Discord.GuildMember,
 								  delta: number,
+								  activityConfig: Activity,
 								  cooldownKey: UserActivityCooldown | undefined = undefined,
 								  ): Promise<void>
 	{
@@ -107,8 +116,8 @@ class ActivityHooks
 				return
 			}
 
-			this.logger.debug(`${member.user.username}: Set ${this.config.activity.cooldown} seconds cooldown (${cooldownKey})`, 'ActivityHooks')
-			userActivity.cooldowns[cooldownKey] = Date.now() + (this.config.activity.cooldown * 1000)
+			this.logger.debug(`${member.user.username}: Set ${activityConfig.cooldown} seconds cooldown (${cooldownKey})`, 'ActivityHooks')
+			userActivity.cooldowns[cooldownKey] = Date.now() + (activityConfig.cooldown * 1000)
 		}
 
 		// Add delta to user activity score
@@ -167,10 +176,10 @@ class ActivityHooks
 		let addedRankingRole = false
 
 		// Update members' ranking role
-		const rankingRolesLength = this.config.activity.rankingRoles.length
+		const rankingRolesLength = activityConfig.rankingRoles.length
 		while (i < rankingRolesLength && j <= maxRankIndex)
 		{
-			if (this.config.activity.rankingRoles[i].rank <= j)
+			if (activityConfig.rankingRoles[i].rank <= j)
 			{
 				++i
 			}
@@ -184,20 +193,20 @@ class ActivityHooks
 				if (concurrent.id)
 				{
 					// Remove roles
-					for (let k = 0; k < this.config.activity.rankingRoles.length; ++k)
+					for (let k = 0; k < activityConfig.rankingRoles.length; ++k)
 					{
 						if (k == i) continue
-						if (concurrent.roles.cache.has(this.config.activity.rankingRoles[k].role))
+						if (concurrent.roles.cache.has(activityConfig.rankingRoles[k].role))
 						{
-							await concurrent.roles.remove(this.config.activity.rankingRoles[k].role)
+							await concurrent.roles.remove(activityConfig.rankingRoles[k].role)
 								.catch(this.logger.error)
 						}
 					}
 
 					// Add role
-					if (!concurrent.roles.cache.has(this.config.activity.rankingRoles[i].role))
+					if (!concurrent.roles.cache.has(activityConfig.rankingRoles[i].role))
 					{
-						await concurrent.roles.add(this.config.activity.rankingRoles[i].role)
+						await concurrent.roles.add(activityConfig.rankingRoles[i].role)
 							.catch(this.logger.error)
 					}
 				}
@@ -214,7 +223,7 @@ class ActivityHooks
 			if (concurrent.id)
 			{
 				// Remove roles
-				for (let rankingRole of this.config.activity.rankingRoles)
+				for (let rankingRole of activityConfig.rankingRoles)
 				{
 					if (concurrent.roles.cache.has(rankingRole.role))
 					{
@@ -224,9 +233,9 @@ class ActivityHooks
 				}
 
 				i = 0
-				for (; i < this.config.activity.thresholdRoles.length; ++i)
+				for (; i < activityConfig.thresholdRoles.length; ++i)
 				{
-					if (this.config.activity.thresholdRoles[i].threshold
+					if (activityConfig.thresholdRoles[i].threshold
 					    > this.state.db.activities.users[concurrent.id].score)
 					{
 						break
@@ -237,9 +246,9 @@ class ActivityHooks
 				if (i >= 0)
 				{
 					// Add threshold role
-					if (!concurrent.roles.cache.has(this.config.activity.thresholdRoles[i].role))
+					if (!concurrent.roles.cache.has(activityConfig.thresholdRoles[i].role))
 					{
-						await concurrent.roles.add(this.config.activity.thresholdRoles[i].role)
+						await concurrent.roles.add(activityConfig.thresholdRoles[i].role)
 							.catch(this.logger.error)
 					}
 				}
@@ -250,9 +259,9 @@ class ActivityHooks
 		else
 		{
 			i = 0
-			for (; i < this.config.activity.thresholdRoles.length; ++i)
+			for (; i < activityConfig.thresholdRoles.length; ++i)
 			{
-				if (this.config.activity.thresholdRoles[i].threshold > userActivity.score)
+				if (activityConfig.thresholdRoles[i].threshold > userActivity.score)
 					break
 			}
 
@@ -260,21 +269,21 @@ class ActivityHooks
 			if (i >= 0)
 			{
 				// Add threshold role
-				if (!member.roles.cache.has(this.config.activity.thresholdRoles[i].role))
+				if (!member.roles.cache.has(activityConfig.thresholdRoles[i].role))
 				{
-					await member.roles.add(this.config.activity.thresholdRoles[i].role)
+					await member.roles.add(activityConfig.thresholdRoles[i].role)
 						.catch(this.logger.error)
 				}
 			}
 		}
 
 		// Remove threshold roles
-		for (let k = 0; k < this.config.activity.thresholdRoles.length; k++)
+		for (let k = 0; k < activityConfig.thresholdRoles.length; k++)
 		{
 			if (k == i) continue
-			if (member.roles.cache.has(this.config.activity.thresholdRoles[k].role))
+			if (member.roles.cache.has(activityConfig.thresholdRoles[k].role))
 			{
-				await member.roles.remove(this.config.activity.thresholdRoles[k].role)
+				await member.roles.remove(activityConfig.thresholdRoles[k].role)
 					.catch(this.logger.error)
 			}
 		}
