@@ -1,5 +1,4 @@
-import { Bot, Discord, Translator } from 'discord-mel'
-import HookManager from 'discord-mel/dist/hooks/HookManager'
+import { Bot, Discord, HooksManager, Translator } from 'discord-mel'
 import Logger from 'discord-mel/dist/logger/Logger'
 import Config from '../config/Config'
 import State from '../state/State'
@@ -9,7 +8,7 @@ class ActivityHooks
 {
 	private readonly bot: Bot
 	private readonly config: Config
-	private readonly hooks: HookManager
+	private readonly hooks: HooksManager
 	private readonly logger: Logger
 	private readonly state: State
 	private readonly translator: Translator
