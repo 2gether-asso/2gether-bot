@@ -8,7 +8,7 @@ class Activity
 			message: 0,
 			command: 0,
 			reaction: 0,
-			vocal: 0
+			voice: 0
 		}
 
 	public cooldown = 1
