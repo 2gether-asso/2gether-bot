@@ -1,4 +1,4 @@
-import { Bot, Discord, HooksManager, Translator } from 'discord-mel'
+import { Mel, Discord, HooksManager, Translator } from 'discord-mel'
 import Logger from 'discord-mel/dist/logger/Logger'
 import Config from '../config/Config'
 import State from '../state/State'
@@ -6,14 +6,14 @@ import { UserActivityCooldown } from '../state/types/UserActivity'
 
 class ActivityHooks
 {
-	private readonly bot: Bot
+	private readonly bot: Mel
 	private readonly config: Config
 	private readonly hooks: HooksManager
 	private readonly logger: Logger
 	private readonly state: State
 	private readonly translator: Translator
 
-	constructor(bot: Bot)
+	constructor(bot: Mel)
 	{
 		this.bot = bot
 		this.config = this.bot.config as Config

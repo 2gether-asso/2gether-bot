@@ -1,15 +1,15 @@
 import path from 'path'
 
-import { Bot } from 'discord-mel'
+import { Mel } from 'discord-mel'
 
 import State from './state/State'
 import ActivityHooks from './hooks/ActivityHooks'
 import Config from './config/Config'
 
-Bot.Services.Config = Config
-Bot.Services.State = State
+Mel.Services.Config = Config
+Mel.Services.State = State
 
-const bot = new Bot(
+const bot = new Mel(
 	{
 		absPath: path.dirname(__dirname),
 		configFile: './config.json',
@@ -18,10 +18,10 @@ const bot = new Bot(
 	{
 		intents:
 			[
-				Bot.Intents.FLAGS.GUILDS,
-				Bot.Intents.FLAGS.GUILD_VOICE_STATES,
-				Bot.Intents.FLAGS.GUILD_MESSAGES,
-				Bot.Intents.FLAGS.DIRECT_MESSAGES,
+				Mel.Intents.FLAGS.GUILDS,
+				Mel.Intents.FLAGS.GUILD_VOICE_STATES,
+				Mel.Intents.FLAGS.GUILD_MESSAGES,
+				Mel.Intents.FLAGS.DIRECT_MESSAGES,
 			],
 		partials:
 			[

@@ -1,14 +1,14 @@
 import { ApplicationCommandType } from 'discord-api-types'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
 
-import { AbstractCommand, Bot, Discord } from 'discord-mel'
+import { AbstractCommand, Mel, Discord } from 'discord-mel'
 import Collection = Discord.Collection
 
 import State from '../state/State'
 
 class RunGiveawayCommand extends AbstractCommand
 {
-	constructor(bot: Bot)
+	constructor(bot: Mel)
 	{
 		super(bot, 'rungiveaway')
 
