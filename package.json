@@ -13,7 +13,7 @@
 	"dependencies": {
 		"@discordjs/builders": "^0.8.2",
 		"discord-api-types": "^0.24.0",
-		"discord-mel": "^1.3.0",
+		"discord-mel": "^1.4.0",
 		"typescript": "^4.4.4"
 	},
 	"devDependencies": {
