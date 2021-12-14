@@ -1,15 +1,9 @@
-import Config from '../Config'
+import { Guild as BaseGuild } from 'discord-mel/dist/config/AbstractConfig'
 import Activity from './Activity'
 
-class Guild
+class Guild extends BaseGuild
 {
 	public activity: Activity = new Activity()
-
-	public mergeWith(guild: Guild): this
-	{
-		Config.assignDeep(this, guild)
-		return this
-	}
 }
 
 export default Guild

@@ -1,45 +1,27 @@
-import { DefaultConfig } from 'discord-mel'
+import { AbstractConfig } from 'discord-mel'
+import Global from './types/Global'
 import Guild from './types/Guild'
-import Guilds from './types/Guilds'
 
-class Config extends DefaultConfig
+class Config extends AbstractConfig
 {
-	public guilds: Guilds = new Guilds()
-
+	public global: Global = new Global()
 	public guildDefault: Guild = new Guild()
 
-	private guildConfigs: Guilds = new Guilds()
-
-	constructor()
+	public constructor()
 	{
 		super()
 	}
 
-	public loadConfigFile(configFile?: string, charset: BufferEncoding = 'utf8')
+	public getGlobalConfig(contextGuild?: Global): Global
 	{
-		super.loadConfigFile(configFile, charset)
-		this.guildConfigs.clear()
+		const globalConfig = super.getGlobalConfig(contextGuild ?? new Global())
+		return new Global(globalConfig)
 	}
 
-	public getGuildConfig(guildId: string): Guild
+	public getGuildConfig(guildId: string, contextGuild?: Guild): Guild
 	{
-		const guildConfig = this.guildConfigs.get(guildId)
-		if (guildConfig)
-		{
-			return guildConfig
-		}
-
-		const newGuildConfig = new Guild()
-		newGuildConfig.mergeWith(this.guildDefault)
-
-		const guild = this.guilds.get(guildId)
-		if (guild)
-		{
-			newGuildConfig.mergeWith(guild)
-		}
-
-		this.guildConfigs.set(guildId, newGuildConfig)
-		return newGuildConfig
+		const guildConfig = super.getGuildConfig(guildId, contextGuild ?? new Guild())
+		return new Guild(guildConfig)
 	}
 }
 
