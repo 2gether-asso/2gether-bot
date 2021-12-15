@@ -8,7 +8,7 @@ class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements Mer
 	{
 		for (const item of object)
 		{
-			this.push(item)
+			this.push(new ActivityThresholdRole(item))
 		}
 
 		return this

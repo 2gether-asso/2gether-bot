@@ -8,7 +8,7 @@ class ActivityRankingRoles extends Array<ActivityRankingRole> implements Mergeab
 	{
 		for (const item of object)
 		{
-			this.push(item)
+			this.push(new ActivityRankingRole(item))
 		}
 
 		return this
