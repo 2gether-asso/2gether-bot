@@ -1,6 +1,7 @@
 import { Snowflake } from 'discord-api-types'
+import { AbstractConfigType } from 'discord-mel'
 
-class ActivityRankingRole
+class ActivityRankingRole extends AbstractConfigType
 {
 	public rank: number = -1
 

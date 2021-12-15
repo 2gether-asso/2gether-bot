@@ -1,6 +1,7 @@
 import { Snowflake } from 'discord-api-types'
+import { AbstractConfigType } from 'discord-mel'
 
-class ActivityThresholdRole
+class ActivityThresholdRole extends AbstractConfigType
 {
 	public threshold: number = -1
 
