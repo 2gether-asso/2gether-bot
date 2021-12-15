@@ -1,14 +1,21 @@
-interface ActivityRankingRole
+import Mergeable from "discord-mel/dist/functions/Mergeable"
+
+interface ActivityThresholdRole
 {
 	threshold: number
 	role: string
 }
 
-class ActivityThresholdRoles extends Array<ActivityRankingRole>
+class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements Mergeable
 {
-	constructor()
+	public mergeWith(object: any): this
 	{
-		super()
+		for (const item of object)
+		{
+			this.push(item)
+		}
+
+		return this
 	}
 }
 

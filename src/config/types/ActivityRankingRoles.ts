@@ -1,14 +1,21 @@
+import Mergeable from "discord-mel/dist/functions/Mergeable"
+
 interface ActivityRankingRole
 {
 	rank: number
 	role: string
 }
 
-class ActivityRankingRoles extends Array<ActivityRankingRole>
+class ActivityRankingRoles extends Array<ActivityRankingRole> implements Mergeable
 {
-	constructor()
+	public mergeWith(object: any): this
 	{
-		super()
+		for (const item of object)
+		{
+			this.push(item)
+		}
+
+		return this
 	}
 }
 
