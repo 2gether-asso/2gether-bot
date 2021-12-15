@@ -1,10 +1,6 @@
-import Mergeable from "discord-mel/dist/functions/Mergeable"
+import Mergeable from 'discord-mel/dist/functions/Mergeable'
 
-interface ActivityRankingRole
-{
-	rank: number
-	role: string
-}
+import ActivityRankingRole from './ActivityRankingRole'
 
 class ActivityRankingRoles extends Array<ActivityRankingRole> implements Mergeable
 {

@@ -1,10 +1,6 @@
-import Mergeable from "discord-mel/dist/functions/Mergeable"
+import Mergeable from 'discord-mel/dist/functions/Mergeable'
 
-interface ActivityThresholdRole
-{
-	threshold: number
-	role: string
-}
+import ActivityThresholdRole from './ActivityThresholdRole'
 
 class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements Mergeable
 {
