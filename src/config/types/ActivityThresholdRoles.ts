@@ -6,9 +6,9 @@ class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements Mer
 {
 	public mergeWith(object: any): this
 	{
-		for (const item of object)
+		for (const key in object)
 		{
-			this.push(new ActivityThresholdRole(item))
+			this.push(new ActivityThresholdRole(object[key]))
 		}
 
 		return this
