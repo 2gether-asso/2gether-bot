@@ -27,7 +27,7 @@ const bot = new Mel(
 			[
 				'MESSAGE',
 				'CHANNEL',
-				'REACTION'
+				'REACTION',
 			],
 	})
 
