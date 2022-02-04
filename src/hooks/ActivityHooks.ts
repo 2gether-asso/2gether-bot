@@ -199,7 +199,7 @@ class ActivityHooks
 						if (concurrent.roles.cache.has(activityConfig.rankingRoles[k].role))
 						{
 							await concurrent.roles.remove(activityConfig.rankingRoles[k].role)
-								.catch(this.logger.error)
+								.catch(e => this.logger.error(e))
 						}
 					}
 
@@ -207,7 +207,7 @@ class ActivityHooks
 					if (!concurrent.roles.cache.has(activityConfig.rankingRoles[i].role))
 					{
 						await concurrent.roles.add(activityConfig.rankingRoles[i].role)
-							.catch(this.logger.error)
+							.catch(e => this.logger.error(e))
 					}
 				}
 
@@ -228,7 +228,7 @@ class ActivityHooks
 					if (concurrent.roles.cache.has(rankingRole.role))
 					{
 						await concurrent.roles.remove(rankingRole.role)
-							.catch(this.logger.error)
+							.catch(e => this.logger.error(e))
 					}
 				}
 
@@ -249,7 +249,7 @@ class ActivityHooks
 					if (!concurrent.roles.cache.has(activityConfig.thresholdRoles[i].role))
 					{
 						await concurrent.roles.add(activityConfig.thresholdRoles[i].role)
-							.catch(this.logger.error)
+							.catch(e => this.logger.error(e))
 					}
 				}
 			}
@@ -272,7 +272,7 @@ class ActivityHooks
 				if (!member.roles.cache.has(activityConfig.thresholdRoles[i].role))
 				{
 					await member.roles.add(activityConfig.thresholdRoles[i].role)
-						.catch(this.logger.error)
+						.catch(e => this.logger.error(e))
 				}
 			}
 		}
@@ -284,7 +284,7 @@ class ActivityHooks
 			if (member.roles.cache.has(activityConfig.thresholdRoles[k].role))
 			{
 				await member.roles.remove(activityConfig.thresholdRoles[k].role)
-					.catch(this.logger.error)
+					.catch(e => this.logger.error(e))
 			}
 		}
 
