@@ -189,24 +189,30 @@ class ActivityHooks
 
 				// Fetch concurrent member
 				const concurrent = await member.guild.members.fetch(this.state.db.activities.ranking[j])
+					.catch(e => this.logger.warn(e, 'ActivityHooks'))
 
-				if (concurrent.id)
+				if (concurrent?.id)
 				{
 					// Remove roles
 					for (let k = 0; k < activityConfig.rankingRoles.length; ++k)
 					{
 						if (k == i) continue
-						if (concurrent.roles.cache.has(activityConfig.rankingRoles[k].role))
+
+						const rankingRole = activityConfig.rankingRoles[k]
+						if (concurrent.roles.cache.has(rankingRole.role))
 						{
-							await concurrent.roles.remove(activityConfig.rankingRoles[k].role)
+							await concurrent.roles.remove(rankingRole.role)
+								.then(() => this.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
 								.catch(e => this.logger.error(e))
 						}
 					}
 
 					// Add role
-					if (!concurrent.roles.cache.has(activityConfig.rankingRoles[i].role))
+					const newRankingRole = activityConfig.rankingRoles[i]
+					if (!concurrent.roles.cache.has(newRankingRole.role))
 					{
-						await concurrent.roles.add(activityConfig.rankingRoles[i].role)
+						await concurrent.roles.add(newRankingRole.role)
+							.then(() => this.logger.debug(`${concurrent.user.username}: Added ranking role for rank #${newRankingRole.rank}`, 'ActivityHooks'))
 							.catch(e => this.logger.error(e))
 					}
 				}
@@ -228,6 +234,7 @@ class ActivityHooks
 					if (concurrent.roles.cache.has(rankingRole.role))
 					{
 						await concurrent.roles.remove(rankingRole.role)
+							.then(() => this.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
 							.catch(e => this.logger.error(e))
 					}
 				}
@@ -246,9 +253,11 @@ class ActivityHooks
 				if (i >= 0)
 				{
 					// Add threshold role
-					if (!concurrent.roles.cache.has(activityConfig.thresholdRoles[i].role))
+					const newThresholdRole = activityConfig.thresholdRoles[i]
+					if (!concurrent.roles.cache.has(newThresholdRole.role))
 					{
-						await concurrent.roles.add(activityConfig.thresholdRoles[i].role)
+						await concurrent.roles.add(newThresholdRole.role)
+							.then(() => this.logger.debug(`${concurrent.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
 							.catch(e => this.logger.error(e))
 					}
 				}
@@ -269,9 +278,11 @@ class ActivityHooks
 			if (i >= 0)
 			{
 				// Add threshold role
-				if (!member.roles.cache.has(activityConfig.thresholdRoles[i].role))
+				const newThresholdRole = activityConfig.thresholdRoles[i]
+				if (!member.roles.cache.has(newThresholdRole.role))
 				{
-					await member.roles.add(activityConfig.thresholdRoles[i].role)
+					await member.roles.add(newThresholdRole.role)
+						.then(() => this.logger.debug(`${member.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
 						.catch(e => this.logger.error(e))
 				}
 			}
@@ -281,9 +292,12 @@ class ActivityHooks
 		for (let k = 0; k < activityConfig.thresholdRoles.length; k++)
 		{
 			if (k == i) continue
-			if (member.roles.cache.has(activityConfig.thresholdRoles[k].role))
+
+			const thresholdRole = activityConfig.thresholdRoles[k]
+			if (member.roles.cache.has(thresholdRole.role))
 			{
-				await member.roles.remove(activityConfig.thresholdRoles[k].role)
+				await member.roles.remove(thresholdRole.role)
+					.then(() => this.logger.debug(`${member.user.username}: Removed threshold role for threshold #${thresholdRole.threshold}`, 'ActivityHooks'))
 					.catch(e => this.logger.error(e))
 			}
 		}
