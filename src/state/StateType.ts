@@ -1,29 +1,12 @@
-import { IBaseStateType } from "discord-mel";
-import { Snowflake } from "discord-api-types";
+import { IBaseStateType } from 'discord-mel'
+import Activities from './types/Activities'
+import Giveaways from './types/Giveaways'
 
-interface IStateType
+class StateType implements IBaseStateType
 {
-    giveaways:
-        {
-            wins:
-                {
-                    [x: Snowflake]: number
-                }
-        }
-}
+    public activities: Activities = new Activities()
 
-class StateType implements IBaseStateType, IStateType
-{
-    giveaways:
-        {
-            wins:
-                {
-                    [x: Snowflake]: number
-                }
-        } =
-        {
-            wins: {}
-        }
+    public giveaways: Giveaways = new Giveaways()
 }
 
 export default StateType

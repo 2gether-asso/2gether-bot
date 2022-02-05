@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { AbstractCommand, Bot, Discord } from 'discord-mel'
+import { AbstractCommand, Mel, Discord } from 'discord-mel'
 
 class PingCommand extends AbstractCommand
 {
-	constructor(bot: Bot)
+	constructor(bot: Mel)
 	{
 		super(bot, 'ping')
 
