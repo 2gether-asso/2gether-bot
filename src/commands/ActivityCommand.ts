@@ -1,15 +1,12 @@
-import { AbstractCommand, Mel, Discord } from 'discord-mel'
-import Config from '../config/Config'
+import { Mel, Discord } from 'discord-mel'
+
+import AbstractCommand from './AbstractCommand'
 
 class ActivityCommand extends AbstractCommand
 {
-	private readonly config: Config
-
 	constructor(bot: Mel)
 	{
 		super(bot, 'activity')
-
-		this.config = this.bot.config as Config
 
 		this.description = this.translator.translate('activity.description')
 

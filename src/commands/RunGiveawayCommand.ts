@@ -1,10 +1,9 @@
 import { ApplicationCommandType } from 'discord-api-types'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
-
-import { AbstractCommand, Mel, Discord } from 'discord-mel'
+import { Mel, Discord } from 'discord-mel'
 import Collection = Discord.Collection
 
-import State from '../state/State'
+import AbstractCommand from './AbstractCommand'
 
 class RunGiveawayCommand extends AbstractCommand
 {
@@ -32,11 +31,6 @@ class RunGiveawayCommand extends AbstractCommand
 
 		this.guildOnly = true
 		this.permissions = ['ADMINISTRATOR']
-	}
-
-	protected get state(): State
-	{
-		return super.state as State
 	}
 
 	/**
