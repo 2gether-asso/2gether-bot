@@ -8,10 +8,10 @@ class ActivityCommand extends AbstractCommand
 	{
 		super(bot, 'activity')
 
-		this.description = this.translator.translate('activity.description')
+		this.description = this.bot.translator.translate('activity.description')
 
 		this.guildOnly = true
-		this.permissions = ['ADMINISTRATOR']
+		this.permissions.add('ADMINISTRATOR')
 
 		// Legacy commands aliases
 		this.commandAliases.add('activity')

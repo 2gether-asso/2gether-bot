@@ -17,7 +17,7 @@ class RunGiveawayCommand extends AbstractCommand
 		// this.commandAliases.add('rungiveaway')
 
 		// Application commands
-		this.applicationCommands.push(
+		this.applicationCommands.add(
 			(() => {
 				const applicationCommand = new ContextMenuCommandBuilder()
 				applicationCommand.setName(this.name)
@@ -30,7 +30,7 @@ class RunGiveawayCommand extends AbstractCommand
 		this.componentIds.add(`${this.name}:select_emoji`)
 
 		this.guildOnly = true
-		this.permissions = ['ADMINISTRATOR']
+		this.permissions.add('ADMINISTRATOR')
 	}
 
 	/**
@@ -53,13 +53,13 @@ class RunGiveawayCommand extends AbstractCommand
 							.catch(error =>
 								{
 									message.reply('Failed to execute the command.')
-									this.logger.warn(error, `${this.name}:${repliedToId}`)
+									this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 								})
 					})
 				.catch(error =>
 					{
 						message.reply('Failed to fetch the giveaway message.')
-						this.logger.warn(error, `${this.name}:${repliedToId}`)
+						this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 
 			// Delete user command
@@ -105,7 +105,7 @@ class RunGiveawayCommand extends AbstractCommand
 									],
 									ephemeral: true,
 								})
-							this.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)						}
+							this.bot.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)						}
 						else
 						{
 							const reaction = repliedTo.reactions.cache.first()
@@ -123,7 +123,7 @@ class RunGiveawayCommand extends AbstractCommand
 												content: 'Failed to execute the command.',
 												ephemeral: true,
 											})
-										this.logger.warn(error, `${this.name}:${repliedToId}`)
+										this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 									})
 						}
 					})
@@ -133,7 +133,7 @@ class RunGiveawayCommand extends AbstractCommand
 								content: 'Failed to fetch the giveaway message.',
 								ephemeral: true,
 							})
-						this.logger.warn(error, `${this.name}:${repliedToId}`)
+						this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 					})
 		}
 		else
@@ -163,7 +163,7 @@ class RunGiveawayCommand extends AbstractCommand
 						.then(repliedTo =>
 							{
 								const reaction = repliedTo.reactions.resolve(emojiId) || undefined
-								this.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
+								this.bot.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
 								this.execute(repliedTo, channel, interaction.user, reaction)
 									.then(() =>
 										{
@@ -178,7 +178,7 @@ class RunGiveawayCommand extends AbstractCommand
 													content: 'Failed to execute the command.',
 													ephemeral: true,
 												})
-											this.logger.warn(error, `${this.name}:${repliedToId}`)
+											this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 										})
 							})
 						.catch(error =>
@@ -187,7 +187,7 @@ class RunGiveawayCommand extends AbstractCommand
 										content: 'Failed to fetch the giveaway message.',
 										ephemeral: true,
 									})
-								this.logger.warn(error, `${this.name}:${repliedToId}`)
+								this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
 							})
 				}
 				else
@@ -232,9 +232,9 @@ class RunGiveawayCommand extends AbstractCommand
 				.catch(() => undefined)
 			|| new Collection<string, Discord.User>()
 
-		this.logger.debug(`Trying to draw ${options.nbWinners} winners`, `${this.name}:${repliedTo.id}`)
+		this.bot.logger.debug(`Trying to draw ${options.nbWinners} winners`, `${this.name}:${repliedTo.id}`)
 		const winners = participants.random(options.nbWinners)
-		this.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
+		this.bot.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
 
 		let content = `Le giveaway`
 		if (channel.lastMessageId !== repliedTo.id)
@@ -274,7 +274,7 @@ class RunGiveawayCommand extends AbstractCommand
 									// Save participations
 									const participations = (db.giveaways.participations[participant.id] || 0) + 1
 									db.giveaways.participations[participant.id] = participations
-									this.logger.debug(`${participant.username} now has ${participations} participations`, `${this.name}:${repliedTo.id}`)
+									this.bot.logger.debug(`${participant.username} now has ${participations} participations`, `${this.name}:${repliedTo.id}`)
 								})
 
 							winners.forEach(winner =>
@@ -282,11 +282,11 @@ class RunGiveawayCommand extends AbstractCommand
 									// Save wins
 									const wins = (db.giveaways.wins[winner.id] || 0) + 1
 									db.giveaways.wins[winner.id] = wins
-									this.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
+									this.bot.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
 								})
 						})
 					})
-				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
+				.catch(error => this.bot.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
 		else
 		{
@@ -296,7 +296,7 @@ class RunGiveawayCommand extends AbstractCommand
 			channel.send({ content,
 					reply: { messageReference: repliedTo.id }
 				})
-				.catch(error => this.logger.warn(error, `${this.name}:${repliedTo.id}`))
+				.catch(error => this.bot.logger.warn(error, `${this.name}:${repliedTo.id}`))
 		}
 	}
 }

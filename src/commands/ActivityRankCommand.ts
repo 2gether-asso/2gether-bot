@@ -1,19 +1,15 @@
-import { AbstractCommand, Discord, ListenerTypes, Mel, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
+import { Discord, ListenerTypes, Mel, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
 import MessageReactionHandler from 'discord-mel/dist/listeners/handler/MessageReactionHandler'
-import Config from '../config/Config'
-import State from '../state/State'
+
+import AbstractCommand from './AbstractCommand'
 
 class ActivitRankCommand extends AbstractCommand
 {
-	private readonly config: Config
-
 	constructor(bot: Mel)
 	{
 		super(bot, 'activityrank')
 
-		this.config = this.bot.config as Config
-
-		this.description = this.translator.translate('activityrank.description')
+		this.description = this.bot.translator.translate('activityrank.description')
 
 		this.guildOnly = true
 
@@ -32,11 +28,6 @@ class ActivitRankCommand extends AbstractCommand
 						.setEnd(this.messageReactionHandlerOnEnd.bind(this))
 						)
 			)
-	}
-
-	protected get state(): State
-	{
-		return super.state as State
 	}
 
 	async onMessage(message: Discord.Message): Promise<void>
@@ -60,7 +51,7 @@ class ActivitRankCommand extends AbstractCommand
 					done: '👍',
 				};
 
-				this.bot.listeners.add(answer,
+				this.bot.listeners.addFor(answer,
 						(new MessageReactionListenerRegister())
 							.setCommand(this.name)
 							.setIdleTimeout(120000) // 2 minutes
@@ -73,13 +64,13 @@ class ActivitRankCommand extends AbstractCommand
 					)
 					.then(() => this.updateEmbed(answer))
 					.then((updatedEmbed: Discord.MessageEmbed) => answer.edit({ embeds: [updatedEmbed] }))
-					.catch(e => this.logger.error(`${this.name}:${message.id}`, e));
+					.catch(e => this.bot.logger.error(`${this.name}:${message.id}`, e));
 
 				// React with emojis in order
 				for (let emoji of Object.values(emojis))
 				{
 					await answer.react(emoji)
-						.catch(e => this.logger.error(`Error reacting with emoji ${emoji}`, e))
+						.catch(e => this.bot.logger.error(`Error reacting with emoji ${emoji}`, e))
 				}
 			})
 			.catch(console.error)
@@ -187,19 +178,19 @@ class ActivitRankCommand extends AbstractCommand
 	{
 		// Remove the user reaction
 		reaction.users.remove(user)
-			.catch(e => this.logger.error(e))
+			.catch(e => this.bot.logger.error(e))
 
 		const data = this.state.db.listeners.get(message.id)?.data
 		const collector = (this.bot.listeners.get(message.id) as MessageReactionListener | undefined)?.collector
 
 		if (data === undefined)
 		{
-			this.logger.error('messageReactionHandlerOnCollect: data is undefined')
+			this.bot.logger.error('messageReactionHandlerOnCollect: data is undefined')
 			return
 		}
 		else if (collector === undefined)
 		{
-			this.logger.error('messageReactionHandlerOnCollect: collector is undefined')
+			this.bot.logger.error('messageReactionHandlerOnCollect: collector is undefined')
 			return
 		}
 		else if (reaction.emoji.name === data.emojis.down)
