@@ -1,12 +1,12 @@
-import { IBaseStateType } from 'discord-mel'
+import { AbstractDB } from 'discord-mel'
 import Activities from './types/Activities'
 import Giveaways from './types/Giveaways'
 
-class StateType implements IBaseStateType
+class StateDB extends AbstractDB
 {
     public activities: Activities = new Activities()
 
     public giveaways: Giveaways = new Giveaways()
 }
 
-export default StateType
+export default StateDB
