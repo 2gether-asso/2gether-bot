@@ -164,7 +164,7 @@ class ActivitRankCommand extends AbstractCommand
 		return embed;
 	}
 
-	protected messageReactionHandlerFilter(message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): boolean
+	protected messageReactionHandlerFilter(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): boolean
 	{
 		const data = this.state.db.listeners.get(message.id)?.data
 
@@ -174,7 +174,7 @@ class ActivitRankCommand extends AbstractCommand
 			&& Object.values(data.emojis).includes(reaction.emoji.name)
 	}
 
-	protected messageReactionHandlerOnCollect(message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): void
+	protected messageReactionHandlerOnCollect(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): void
 	{
 		// Remove the user reaction
 		reaction.users.remove(user)
@@ -224,7 +224,7 @@ class ActivitRankCommand extends AbstractCommand
 		this.updateEmbed(message).then(embed => message.edit({ embeds: [embed] }));
 	}
 
-	protected messageReactionHandlerOnEnd(message: Discord.Message, collected: any, reason: string): void
+	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, message: Discord.Message, collected: any, reason: string): void
 	{
 		if (reason === 'freeze') {
 			message.edit(`Voici les meilleurs du classement !`)
