@@ -3,8 +3,10 @@ import { AbstractCommand as AbstractMelCommand } from 'discord-mel'
 import Config from '../config/Config'
 import State from '../state/State'
 
-class AbstractCommand extends AbstractMelCommand
+abstract class AbstractCommand extends AbstractMelCommand
 {
+	public static readonly enabled: boolean = false
+
 	protected get config(): Config
 	{
 		return this.bot.config as Config

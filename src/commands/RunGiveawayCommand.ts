@@ -7,6 +7,8 @@ import AbstractCommand from './AbstractCommand'
 
 class RunGiveawayCommand extends AbstractCommand
 {
+	public static readonly enabled: boolean = true
+
 	constructor(bot: Mel)
 	{
 		super(bot, 'rungiveaway')

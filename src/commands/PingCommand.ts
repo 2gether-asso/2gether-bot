@@ -3,6 +3,8 @@ import { AbstractCommand, Mel, Discord } from 'discord-mel'
 
 class PingCommand extends AbstractCommand
 {
+	public static readonly enabled: boolean = true
+
 	constructor(bot: Mel)
 	{
 		super(bot, 'ping')
