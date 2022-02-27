@@ -7,9 +7,11 @@ class ActivitRankCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
-	constructor(bot: Mel)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'activityrank')
+		super(id, bot)
+
+		this.name = 'activityrank'
 
 		this.description = this.bot.translator.translate('activityrank.description')
 
@@ -55,7 +57,7 @@ class ActivitRankCommand extends AbstractCommand
 
 				this.bot.listeners.addFor(answer,
 						(new MessageReactionListenerRegister())
-							.setCommand(this.name)
+							.setCommandId(this.id)
 							.setIdleTimeout(120000) // 2 minutes
 							.setData({
 								authorID: message.author.id,

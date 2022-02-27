@@ -5,9 +5,11 @@ class PingCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
-	constructor(bot: Mel)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'ping')
+		super(id, bot)
+
+		this.name = 'ping'
 
 		this.description = this.bot.translator.translate('ping.description')
 

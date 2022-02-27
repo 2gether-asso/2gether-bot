@@ -6,10 +6,11 @@ class ActivityCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
-	constructor(bot: Mel)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'activity')
+		super(id, bot)
 
+		this.name = 'activity'
 		this.description = this.bot.translator.translate('activity.description')
 
 		this.guildOnly = true

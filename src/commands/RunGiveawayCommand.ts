@@ -9,9 +9,11 @@ class RunGiveawayCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
-	constructor(bot: Mel)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'rungiveaway')
+		super(id, bot)
+
+		this.name = 'rungiveaway'
 
 		this.description = 'Execute le tirage au sort.'
 

@@ -8,9 +8,11 @@ class RoleMenuCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
-	constructor(bot: Mel)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'rolemenu')
+		super(id, bot)
+
+		this.name = 'rolemenu'
 
 		this.description = this.bot.translator.translate('rolemenu.description')
 
@@ -25,7 +27,7 @@ class RoleMenuCommand extends AbstractCommand
 			)
 
 		// Components
-		this.componentIds.add(`${this.name}:select_emoji`)
+		this.componentIds.add(`${this.name}:finish`)
 
 		this.guildOnly = true
 		this.permissions.add('ADMINISTRATOR')
@@ -78,7 +80,7 @@ class RoleMenuCommand extends AbstractCommand
 					// Add the reaction listener
 					this.bot.listeners.addFor(message,
 							(new MessageReactionListenerRegister())
-								.setCommand(this.name)
+								.setCommandId(this.id)
 								.setIdleTimeout(120000) // 2 minutes
 								.setData({
 									authorId: message.author.id,
@@ -267,10 +269,10 @@ class RoleMenuCommand extends AbstractCommand
 			// Add the reaction listener
 			this.bot.listeners.addFor(message.channel as any,
 				(new MessageListenerRegister())
-					.setCommand(this.name)
+					.setCommandId(this.id)
 					.setIdleTimeout(120000) // 2 minutes
 					.setData({
-						reactionListenerId: listener.listenerId,
+						reactionListenerId: listener.id,
 						// resultMessageId: dbListener.targetId,
 						authorId: user.id,
 						emoji: reaction.emoji.name,
