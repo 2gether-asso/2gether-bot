@@ -123,21 +123,20 @@ class RoleMenuCommand extends AbstractCommand
 								.setIdleTimeout(120000) // 2 minutes
 								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
-						.then(listener =>
-							this.updateMessageEmbed(message, listener.getDbListener())
-								.then(updatedMessage => updatedMessage.edit(
-									{
-										content: null,
-										components: [
-											new Discord.MessageActionRow()
-												.addComponents(
-													new Discord.MessageButton()
-														.setCustomId(`${this.COMPONENT_FINISH}:${listener.id}`)
-														.setLabel('Terminer')
-														.setStyle('SUCCESS')
-												)
-										]
-									})))
+						.then(listener => this.updateMessageEmbed(message, listener.getDbListener()))
+						.then(updatedMessage => updatedMessage.edit(
+							{
+								content: null,
+								components: [
+									new Discord.MessageActionRow()
+										.addComponents(
+											new Discord.MessageButton()
+												.setCustomId(this.COMPONENT_FINISH)
+												.setLabel('Terminer')
+												.setStyle('SUCCESS')
+										)
+								]
+							}))
 						.then(() => interaction.reply({ content: 'C\'est bon !', ephemeral: true }))
 						.catch(error =>
 							{
