@@ -1,13 +1,26 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister, DBListener } from 'discord-mel'
+import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister, DBListener, AbstractDBMapType } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
+
+class MessageReactionListenerDataEmojiRoles extends AbstractDBMapType<string, Discord.Snowflake>
+{
+	public unserialize(other: any): this
+	{
+		for (const key in other)
+		{
+			this.set(key, other[key])
+		}
+
+		return this
+	}
+}
 
 class MessageReactionListenerData
 {
 	public authorId: Discord.Snowflake
 
-	public emojiRoles: { [emoji: string]: Discord.Snowflake } = {}
+	public emojiRoles: MessageReactionListenerDataEmojiRoles = new MessageReactionListenerDataEmojiRoles()
 
 	// title: 'React with an emoji to add or remove yourself a role'
 	public title: string //: 'Menu de sélectionner de rôles'
@@ -164,14 +177,13 @@ class RoleMenuCommand extends AbstractCommand
 			embed.addField('Status', `⚠️ ${data.status}`, false)
 		}
 
-		const emojiRoles = Object.entries(data.emojiRoles)
-		if (emojiRoles.length <= 0)
+		if (data.emojiRoles.size <= 0)
 		{
 			embed.setDescription(`Rien n'a été configuré pour le moment, j'attends qu'un administrateur ajoute des réactions`)
 			return embed
 		}
 
-		const rows = emojiRoles.map(([emoji, roleId]) =>
+		const rows = Array.from(data.emojiRoles.entries()).map(([emoji, roleId]) =>
 			{
 				return `${emoji} - <@&${roleId}>`
 			})
@@ -252,7 +264,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		// Associate the role to the emoji
-		emojis[data.emoji] = role.id
+		emojis.set(data.emoji, role.id)
 
 		// TODO: Check message.deletable ?
 		// TODO: Check permission MANAGE_MESSAGES ?
@@ -295,7 +307,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		const data = dbListener.data as MessageReactionListenerData
-		const role = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
+		const role = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
 		if (role)
 		{
 			member.roles.add(role)
@@ -346,7 +358,7 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const role = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
+		const role = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
 		if (role)
 		{
 			member.roles.remove(role)
