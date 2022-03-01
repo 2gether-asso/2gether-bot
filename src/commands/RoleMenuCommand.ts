@@ -184,12 +184,16 @@ class RoleMenuCommand extends AbstractCommand
 				})
 	}
 
-	protected async updateMessageEmbed(message: Discord.Message, dbListener: DBListener | undefined): Promise<Discord.Message>
+	public async onComponentInteraction(interaction: Discord.MessageComponentInteraction): Promise<void> {
+		// Component interactions are not handled in this method
+	}
+
+	protected async updateMessageEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined): Promise<Discord.Message>
 	{
 		const embed = new Discord.MessageEmbed(message.embeds[0])
 		embed.spliceFields(0, 25) // Reset fields
 
-		if (!dbListener)
+		if (!dbReactionListener)
 		{
 			embed.setTitle('Invalide')
 			embed.setDescription('Le système de rôle est en échec.')
@@ -197,7 +201,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 		else
 		{
-			const data = dbListener.data as MessageReactionListenerData
+			const data = dbReactionListener.data as MessageReactionListenerData
 			embed.setTitle(data.title)
 			embed.setColor(data.color)
 
@@ -431,18 +435,20 @@ class RoleMenuCommand extends AbstractCommand
 
 		const data = dbListener.data as MessageComponentListenerData
 
-		const reactionData = this.state.db.listeners.get(data.reactionListenerId)?.data as MessageReactionListenerData | undefined
-		if (!reactionData)
+		const dbReactionListener = this.state.db.listeners.get(data.reactionListenerId)
+		if (!dbReactionListener)
 		{
 			return
 		}
+
+		const reactionData = dbReactionListener.data as MessageReactionListenerData
 
 		// Mark and update the listener as configured
 		reactionData.configured = true
 		reactionData.status = undefined // Remove the status
 		this.state.save()
 
-		this.updateMessageEmbed(listener.message, dbListener)
+		this.updateMessageEmbed(listener.message, dbReactionListener)
 			.then(() =>
 				{
 					// Stop the message component listener
