@@ -1,7 +1,20 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister, DBListener, AbstractDBMapType } from 'discord-mel'
+import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageComponentHandler, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageReactionListenerRegister, DBListener, MessageComponentListener } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
+
+class MessageComponentListenerData
+{
+	public reactionListenerId: Discord.Snowflake
+
+	public authorId: Discord.Snowflake
+
+	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake)
+	{
+		this.reactionListenerId = reactionListenerId
+		this.authorId = authorId
+	}
+}
 
 class MessageReactionListenerData
 {
@@ -96,6 +109,15 @@ class RoleMenuCommand extends AbstractCommand
 						// .setEnd(this.messageReactionHandlerOnEnd.bind(this))
 					)
 			)
+			.set(
+				ListenerTypes.MESSAGE_COMPONENT,
+				(new MessageComponentHandler())
+					.setFilter(this.messageComponentHandlerFilter.bind(this))
+					.configureOn(on => on
+						.setCollect(this.messageComponentHandlerOnCollect.bind(this))
+						.setEnd(this.messageComponentHandlerOnEnd.bind(this))
+					)
+			)
 	}
 
 	async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
@@ -123,20 +145,28 @@ class RoleMenuCommand extends AbstractCommand
 								.setIdleTimeout(120000) // 2 minutes
 								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
-						.then(listener => this.updateMessageEmbed(message, listener.getDbListener()))
-						.then(updatedMessage => updatedMessage.edit(
-							{
-								content: null,
-								components: [
-									new Discord.MessageActionRow()
-										.addComponents(
-											new Discord.MessageButton()
-												.setCustomId(this.COMPONENT_FINISH)
-												.setLabel('Terminer')
-												.setStyle('SUCCESS')
-										)
-								]
-							}))
+						.then(listener =>
+							this.updateMessageEmbed(message, listener.getDbListener())
+								.then(updatedMessage => updatedMessage.edit(
+									{
+										content: null,
+										components: [
+											new Discord.MessageActionRow()
+												.addComponents(
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_FINISH)
+														.setLabel('Terminer')
+														.setStyle('SUCCESS')
+												)
+										]
+									}))
+								.then(updatedMessage =>
+									this.bot.listeners.addFor(updatedMessage,
+										(new MessageComponentListenerRegister())
+											.setCommandId(this.id)
+											.setIdleTimeout(120000) // 2 minutes
+											.setData(new MessageComponentListenerData(listener.id, interaction.user.id))
+									)))
 						.then(() => interaction.reply({ content: 'C\'est bon !', ephemeral: true }))
 						.catch(error =>
 							{
@@ -152,52 +182,6 @@ class RoleMenuCommand extends AbstractCommand
 						})
 					this.bot.logger.warn('Failed to execute the command', 'RoleMenuCommand', error)
 				})
-	}
-
-	async onComponentInteraction(interaction: Discord.MessageComponentInteraction)
-	{
-		if (!interaction.isButton())
-		{
-			return
-		}
-
-		// Matches "<id>:<component>:<data>"
-		const matches = interaction.customId.match(/^(.+?:.+?)(?::(.+))?$/)
-		if (!matches)
-		{
-			this.bot.logger.error(`Invalid component custom id ${interaction.customId}`, 'RoleMenuCommand')
-			return
-		}
-
-		const [, componentId, rawData] = matches
-
-		if (componentId === this.COMPONENT_FINISH)
-		{
-			// interaction.deferReply({ ephemeral: true })
-			interaction.deferUpdate()
-
-			const dbListener = this.bot.listeners.get(rawData)?.getDbListener()
-			if (!dbListener)
-			{
-				return
-			}
-
-			const message = interaction.message instanceof Discord.Message
-				? interaction.message
-				: await interaction.channel?.messages.fetch(interaction.message.id)
-					.catch(() => undefined)
-			if (!message)
-			{
-				return
-			}
-
-			const data = dbListener.data as MessageReactionListenerData
-			data.configured = true
-			this.state.save()
-
-			this.updateMessageEmbed(message, dbListener)
-				.then(() => interaction.editReply({ content: 'La cofniguration du menu a été enregistrée !' }))
-		}
 	}
 
 	protected async updateMessageEmbed(message: Discord.Message, dbListener: DBListener | undefined): Promise<Discord.Message>
@@ -425,6 +409,56 @@ class RoleMenuCommand extends AbstractCommand
 	// {
 
 	// }
+
+	protected messageComponentHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
+	{
+		const dbListener = listener.getDbListener()
+
+		return dbListener !== undefined
+			&& interaction.isButton()
+			&& interaction.customId === this.COMPONENT_FINISH
+	}
+
+	protected messageComponentHandlerOnCollect(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): void
+	{
+		interaction.deferUpdate()
+
+		const dbListener = listener.getDbListener()
+		if (!dbListener || !listener.message.guild)
+		{
+			return
+		}
+
+		const data = dbListener.data as MessageComponentListenerData
+
+		const reactionData = this.state.db.listeners.get(data.reactionListenerId)?.data as MessageReactionListenerData | undefined
+		if (!reactionData)
+		{
+			return
+		}
+
+		// Mark and update the listener as configured
+		reactionData.configured = true
+		reactionData.status = undefined // Remove the status
+		this.state.save()
+
+		this.updateMessageEmbed(listener.message, dbListener)
+			.then(() =>
+				{
+					// Stop the message component listener
+					listener.collector.stop('finished')
+
+					interaction.editReply({ content: 'La configuration du menu a été enregistrée !' })
+				})
+			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
+	}
+
+	protected messageComponentHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
+	{
+		// Remove the listener button component
+		listener.message.edit({ components: [] })
+			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
+	}
 }
 
 export default RoleMenuCommand
