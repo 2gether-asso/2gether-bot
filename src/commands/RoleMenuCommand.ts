@@ -119,7 +119,7 @@ class RoleMenuCommand extends AbstractCommand
 							(new MessageReactionListenerRegister())
 								.setCommandId(this.id)
 								.setIdleTimeout(120000) // 2 minutes
-								.setData(new MessageListenerData(message.author.id, 'Menu de sélectionner de rôles'))
+								.setData(new MessageListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
 						.then((listener) => this.updateEmbed(message, listener.getDbListener()))
 						.then(updatedEmbed => message.edit({ content: null, embeds: [updatedEmbed] }))
