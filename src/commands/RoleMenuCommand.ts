@@ -133,8 +133,7 @@ class RoleMenuCommand extends AbstractCommand
 								.setIdleTimeout(120000) // 2 minutes
 								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
-						.then((listener) => this.updateEmbed(message, listener.getDbListener()))
-						.then(updatedEmbed => message.edit({ content: null, embeds: [updatedEmbed] }))
+						.then((listener) => this.updateMessageEmbed(message, listener.getDbListener()))
 						.then(() => interaction.reply({
 								content: 'Done!',
 								ephemeral: true,
@@ -155,7 +154,7 @@ class RoleMenuCommand extends AbstractCommand
 				})
 	}
 
-	protected async updateEmbed(message: Discord.Message, dbListener: DBListener | undefined): Promise<Discord.MessageEmbed>
+	protected async updateMessageEmbed(message: Discord.Message, dbListener: DBListener | undefined): Promise<Discord.Message>
 	{
 		const embed = new Discord.MessageEmbed(message.embeds[0])
 		embed.spliceFields(0, 25) // Reset fields
@@ -165,33 +164,35 @@ class RoleMenuCommand extends AbstractCommand
 			embed.setTitle('Invalide')
 			embed.setDescription('Le système de rôle est en échec.')
 			embed.setColor('#ff0000')
-			return embed
 		}
-
-		const data = dbListener.data as MessageReactionListenerData
-		embed.setTitle(data.title)
-		embed.setColor(data.color)
-
-		if (data.status)
+		else
 		{
-			embed.addField('Status', `⚠️ ${data.status}`, false)
-		}
+			const data = dbListener.data as MessageReactionListenerData
+			embed.setTitle(data.title)
+			embed.setColor(data.color)
 
-		if (data.emojiRoles.size <= 0)
-		{
-			embed.setDescription(`Rien n'a été configuré pour le moment, j'attends qu'un administrateur ajoute des réactions`)
-			return embed
-		}
-
-		const rows = Array.from(data.emojiRoles.entries()).map(([emoji, roleId]) =>
+			if (data.status)
 			{
-				return `${emoji} - <@&${roleId}>`
-			})
+				embed.addField('Status', `⚠️ ${data.status}`, false)
+			}
 
-		embed.setDescription(`Choisis tes rôles avec les réactions !`)
-		embed.addField('Roles', rows.join('\n'), false)
+			if (data.emojiRoles.size <= 0)
+			{
+				embed.setDescription(`Rien n'a été configuré pour le moment, j'attends qu'un administrateur ajoute des réactions`)
+			}
+			else
+			{
+				const rows = Array.from(data.emojiRoles.entries()).map(([emoji, roleId]) =>
+					{
+						return `${emoji} - <@&${roleId}>`
+					})
 
-		return embed
+				embed.setDescription(`Choisis tes rôles avec les réactions !`)
+				embed.addField('Roles', rows.join('\n'), false)
+			}
+		}
+
+		return message.edit({ embeds: [ embed ] })
 	}
 
 	protected saveEmbedStatus(message: Discord.Message, dbListener: DBListener | undefined, status: string): void
@@ -203,8 +204,7 @@ class RoleMenuCommand extends AbstractCommand
 
 		dbListener.data.status = status
 		this.state.save()
-		this.updateEmbed(message, dbListener)
-			.then(updatedEmbed => message.edit({ embeds: [updatedEmbed] }))
+		this.updateMessageEmbed(message, dbListener)
 			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
 	}
 
@@ -331,9 +331,8 @@ class RoleMenuCommand extends AbstractCommand
 					data.status = 'waiting_on_reaction'
 					this.state.save()
 
-					return this.updateEmbed(message, dbListener)
+					return this.updateMessageEmbed(message, dbListener)
 				})
-			.then(updatedEmbed => message.edit({ embeds: [updatedEmbed] }))
 			.catch(error =>
 				{
 					// TODO: clean up? delete the message? edit it to say it failed?
