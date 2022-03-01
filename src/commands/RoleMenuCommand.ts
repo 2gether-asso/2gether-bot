@@ -173,7 +173,7 @@ class RoleMenuCommand extends AbstractCommand
 
 		if (componentId === this.COMPONENT_FINISH)
 		{
-			interaction.deferReply({ ephemeral: true })
+			// interaction.deferReply({ ephemeral: true })
 			interaction.deferUpdate()
 
 			const dbListener = this.bot.listeners.get(rawData)?.getDbListener()
