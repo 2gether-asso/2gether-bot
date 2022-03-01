@@ -1,10 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { ApplicationCommandType } from 'discord-api-types'
 import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister, DBListener } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
 
-class MessageListenerData
+class MessageReactionListenerData
 {
 	public authorId: Discord.Snowflake
 
@@ -25,7 +24,7 @@ class MessageListenerData
 	}
 }
 
-class MessageReactionListenerData
+class MessageListenerData
 {
 	public reactionListenerId: Discord.Snowflake
 
@@ -119,7 +118,7 @@ class RoleMenuCommand extends AbstractCommand
 							(new MessageReactionListenerRegister())
 								.setCommandId(this.id)
 								.setIdleTimeout(120000) // 2 minutes
-								.setData(new MessageListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
+								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
 						.then((listener) => this.updateEmbed(message, listener.getDbListener()))
 						.then(updatedEmbed => message.edit({ content: null, embeds: [updatedEmbed] }))
@@ -301,7 +300,7 @@ class RoleMenuCommand extends AbstractCommand
 				(new MessageListenerRegister())
 					.setCommandId(this.id)
 					.setIdleTimeout(120000) // 2 minutes
-					.setData(new MessageReactionListenerData(listener.id, user.id, reaction.emoji.name))
+					.setData(new MessageListenerData(listener.id, user.id, reaction.emoji.name))
 			)
 			.then(() =>
 				{
