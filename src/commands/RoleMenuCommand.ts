@@ -14,9 +14,9 @@ class MessageReactionListenerData
 
 	public status?: string
 
-	public color: string
+	public color: Discord.ColorResolvable
 
-	public constructor(authorId: Discord.Snowflake, title: string, color: string = '#0099ff')
+	public constructor(authorId: Discord.Snowflake, title: string, color: Discord.ColorResolvable = '#0099ff')
 	{
 		this.authorId = authorId
 		this.title = title
@@ -155,15 +155,16 @@ class RoleMenuCommand extends AbstractCommand
 			return embed
 		}
 
-		embed.setTitle(dbListener.data.title)
-		embed.setColor(dbListener.data.color)
+		const data = dbListener.data as MessageReactionListenerData
+		embed.setTitle(data.title)
+		embed.setColor(data.color)
 
-		if (dbListener.data.status)
+		if (data.status)
 		{
-			embed.addField('Status', `⚠️ ${dbListener.data.status}`, false)
+			embed.addField('Status', `⚠️ ${data.status}`, false)
 		}
 
-		const emojiRoles = Object.entries(dbListener.data.emojiRoles)
+		const emojiRoles = Object.entries(data.emojiRoles)
 		if (emojiRoles.length <= 0)
 		{
 			embed.setDescription(`Rien n'a été configuré pour le moment, j'attends qu'un administrateur ajoute des réactions`)
@@ -197,22 +198,23 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected messageHandlerFilter(listener: MessageListener, message: Discord.Message): boolean
 	{
-		const dbListener = listener.getDbListener()
+		const data = listener.getDbListener()?.data as MessageListenerData | undefined
 
-		return dbListener !== undefined
-			&& dbListener.data.authorId === message.author.id
-			&& dbListener.data.reactionListenerId
+		return data !== undefined
+			&& data.authorId === message.author.id
+			&& !!data.reactionListenerId
 	}
 
 	protected async messageHandlerOnCollect(listener: MessageListener, message: Discord.Message): Promise<void>
 	{
-		const dbListener = listener.getDbListener()
-		if (!dbListener)
+		// const dbListener = listener.getDbListener()
+		const data = listener.getDbListener()?.data as MessageListenerData | undefined
+		if (!data)
 		{
 			return
 		}
 
-		const dbReactionListener = this.state.db.listeners.get(dbListener.data.reactionListenerId)
+		const dbReactionListener = this.state.db.listeners.get(data.reactionListenerId)
 		if (!dbReactionListener || !dbReactionListener.targetId)
 		{
 			return
@@ -225,6 +227,13 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
+		if (!data.emoji)
+		{
+			// Emoji invalid
+			this.saveEmbedStatus(resultMessage, dbReactionListener, 'invalid_emoji')
+			return
+		}
+
 		const role = message.mentions.roles.first()
 		if (!role)
 		{
@@ -233,7 +242,8 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const emojis = dbReactionListener.data.emojiRoles
+		const reactionData = dbReactionListener.data as MessageReactionListenerData
+		const emojis = reactionData.emojiRoles
 		if (Object.values(emojis).includes(role.id))
 		{
 			// Role already registered
@@ -242,7 +252,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		// Associate the role to the emoji
-		emojis[dbListener.data.emoji] = role.id
+		emojis[data.emoji] = role.id
 
 		// TODO: Check message.deletable ?
 		// TODO: Check permission MANAGE_MESSAGES ?
@@ -284,11 +294,12 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const role = reaction.emoji.name ? dbListener.data.emojiRoles[reaction.emoji.name] : undefined
+		const data = dbListener.data as MessageReactionListenerData
+		const role = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
 		if (role)
 		{
 			member.roles.add(role)
-				.catch(error => this.bot.logger.error(`Failed to add role ${role.name} to member ${user.username}`, 'RoleMenuCommand', error))
+				.catch(error => this.bot.logger.error(`Failed to add role ${role} to member ${user.username}`, 'RoleMenuCommand', error))
 
 			// user.send(`Hey ! Je confirme t'avoir donné le rôle **${role}** 👍`)
 				// .catch(console.error);
@@ -305,7 +316,7 @@ class RoleMenuCommand extends AbstractCommand
 			.then(() =>
 				{
 					// Update the embed to inform the user that the reaction listener has been created
-					dbListener.data.status = 'waiting_on_reaction'
+					data.status = 'waiting_on_reaction'
 					this.state.save()
 
 					return this.updateEmbed(message, dbListener)
@@ -321,8 +332,9 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected async messageReactionHandlerOnRemove(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
 	{
-		const dbListener = listener.getDbListener()
-		if (!dbListener || !message.guild)
+		// const dbListener = listener.getDbListener()
+		const data = listener.getDbListener()?.data as MessageReactionListenerData | undefined
+		if (!data || !message.guild)
 		{
 			return
 		}
@@ -334,11 +346,11 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const role = reaction.emoji.name ? dbListener.data.emojiRoles[reaction.emoji.name] : undefined
+		const role = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
 		if (role)
 		{
 			member.roles.remove(role)
-				.catch(error => this.bot.logger.error(`Failed to remove role ${role.name} from member ${user.username}`, 'RoleMenuCommand', error))
+				.catch(error => this.bot.logger.error(`Failed to remove role ${role} from member ${user.username}`, 'RoleMenuCommand', error))
 
 	// 		// user.send(`Hey ! Je confirme t'avoir retiré le rôle **${role}** 👍`)
 	// 			// .catch(console.error);
