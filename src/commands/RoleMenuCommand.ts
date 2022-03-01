@@ -22,6 +22,8 @@ class MessageReactionListenerData
 
 	public emojiRoles: MessageReactionListenerDataEmojiRoles = new MessageReactionListenerDataEmojiRoles()
 
+	public configured: boolean = false
+
 	// title: 'React with an emoji to add or remove yourself a role'
 	public title: string //: 'Menu de sélectionner de rôles'
 
@@ -57,6 +59,8 @@ class RoleMenuCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
+	protected readonly COMPONENT_FINISH = `${this.id}:finish`
+
 	constructor(id: string, bot: Mel)
 	{
 		super(id, bot)
@@ -76,7 +80,7 @@ class RoleMenuCommand extends AbstractCommand
 			)
 
 		// Components
-		this.componentIds.add(`${this.name}:finish`)
+		this.componentIds.add(this.COMPONENT_FINISH)
 
 		this.guildOnly = true
 		this.permissions.add('ADMINISTRATOR')
@@ -121,8 +125,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		interaction.channel.send({
-				content: 'Message. Awaiting reactions...',
-				// TODO: Add button component for when configuration is finished
+				content: 'Chargement...',
 			})
 			.then(message =>
 				{
@@ -133,11 +136,21 @@ class RoleMenuCommand extends AbstractCommand
 								.setIdleTimeout(120000) // 2 minutes
 								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
 						)
-						.then((listener) => this.updateMessageEmbed(message, listener.getDbListener()))
-						.then(() => interaction.reply({
-								content: 'Done!',
-								ephemeral: true,
+						.then(listener => this.updateMessageEmbed(message, listener.getDbListener()))
+						.then(updatedMessage => updatedMessage.edit(
+							{
+								content: null,
+								components: [
+									new Discord.MessageActionRow()
+										.addComponents(
+											new Discord.MessageButton()
+												.setCustomId(this.COMPONENT_FINISH)
+												.setLabel('Terminer')
+												.setStyle('SUCCESS')
+										)
+								]
 							}))
+						.then(() => interaction.reply({ content: 'C\'est bon !', ephemeral: true }))
 						.catch(error =>
 							{
 								// TODO: clean up? delete the message? edit it to say it failed?
@@ -152,6 +165,52 @@ class RoleMenuCommand extends AbstractCommand
 						})
 					this.bot.logger.warn('Failed to execute the command', 'RoleMenuCommand', error)
 				})
+	}
+
+	async onComponentInteraction(interaction: Discord.MessageComponentInteraction)
+	{
+		if (!interaction.isButton())
+		{
+			return
+		}
+
+		// Matches "<id>:<component>:<data>"
+		const matches = interaction.customId.match(/^(.+?:.+?)(?::(.+))?$/)
+		if (!matches)
+		{
+			this.bot.logger.error(`Invalid component custom id ${interaction.customId}`, 'RoleMenuCommand')
+			return
+		}
+
+		const [, componentId, rawData] = matches
+
+		if (componentId === this.COMPONENT_FINISH)
+		{
+			interaction.deferReply({ ephemeral: true })
+			interaction.deferUpdate()
+
+			const dbListener = this.bot.listeners.get(rawData)?.getDbListener()
+			if (!dbListener)
+			{
+				return
+			}
+
+			const message = interaction.message instanceof Discord.Message
+				? interaction.message
+				: await interaction.channel?.messages.fetch(interaction.message.id)
+					.catch(() => undefined)
+			if (!message)
+			{
+				return
+			}
+
+			const data = dbListener.data as MessageReactionListenerData
+			data.configured = true
+			this.state.save()
+
+			this.updateMessageEmbed(message, dbListener)
+				.then(() => interaction.editReply({ content: 'La cofniguration du menu a été enregistrée !' }))
+		}
 	}
 
 	protected async updateMessageEmbed(message: Discord.Message, dbListener: DBListener | undefined): Promise<Discord.Message>
@@ -182,6 +241,7 @@ class RoleMenuCommand extends AbstractCommand
 			}
 			else
 			{
+				console.log(data.emojiRoles)
 				const rows = Array.from(data.emojiRoles.entries()).map(([emoji, roleId]) =>
 					{
 						return `${emoji} - <@&${roleId}>`
@@ -307,14 +367,20 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		const data = dbListener.data as MessageReactionListenerData
-		const role = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
-		if (role)
+		if (data.configured)
 		{
-			member.roles.add(role)
-				.catch(error => this.bot.logger.error(`Failed to add role ${role} to member ${user.username}`, 'RoleMenuCommand', error))
+			// Check for a configured emoji and role
+			const roleId = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
+			if (roleId)
+			{
+				member.roles.add(roleId)
+					.catch(error => this.bot.logger.error(`Failed to add role ${roleId} to member ${user.username}`, 'RoleMenuCommand', error))
 
-			// user.send(`Hey ! Je confirme t'avoir donné le rôle **${role}** 👍`)
-				// .catch(console.error);
+				// user.send(`Hey ! Je confirme t'avoir donné le rôle **${role}** 👍`)
+					// .catch(console.error);
+			}
+
+			// Ignore other reactions
 		}
 		else if (member.permissions.has('ADMINISTRATOR'))
 		{
