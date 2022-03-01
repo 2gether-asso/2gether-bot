@@ -4,6 +4,43 @@ import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageLi
 
 import AbstractCommand from './AbstractCommand'
 
+class MessageListenerData
+{
+	public authorId: Discord.Snowflake
+
+	public emojiRoles: { [emoji: string]: Discord.Snowflake } = {}
+
+	// title: 'React with an emoji to add or remove yourself a role'
+	public title: string //: 'Menu de sélectionner de rôles'
+
+	public status?: string
+
+	public color: string
+
+	public constructor(authorId: Discord.Snowflake, title: string, color: string = '#0099ff')
+	{
+		this.authorId = authorId
+		this.title = title
+		this.color = color
+	}
+}
+
+class MessageReactionListenerData
+{
+	public reactionListenerId: Discord.Snowflake
+
+	public authorId: Discord.Snowflake
+
+	public emoji: string | null
+
+	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake, emoji: string | null)
+	{
+		this.reactionListenerId = reactionListenerId
+		this.authorId = authorId
+		this.emoji = emoji
+	}
+}
+
 class RoleMenuCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
@@ -82,14 +119,7 @@ class RoleMenuCommand extends AbstractCommand
 							(new MessageReactionListenerRegister())
 								.setCommandId(this.id)
 								.setIdleTimeout(120000) // 2 minutes
-								.setData({
-									authorId: message.author.id,
-									emojiRoles: {},
-									// title: 'React with an emoji to add or remove yourself a role',
-									title: 'Menu de sélectionner de rôles',
-									status: undefined,
-									color: '#0099ff',
-								})
+								.setData(new MessageListenerData(message.author.id, 'Menu de sélectionner de rôles'))
 						)
 						.then((listener) => this.updateEmbed(message, listener.getDbListener()))
 						.then(updatedEmbed => message.edit({ content: null, embeds: [updatedEmbed] }))
@@ -271,15 +301,7 @@ class RoleMenuCommand extends AbstractCommand
 				(new MessageListenerRegister())
 					.setCommandId(this.id)
 					.setIdleTimeout(120000) // 2 minutes
-					.setData({
-						reactionListenerId: listener.id,
-						// resultMessageId: dbListener.targetId,
-						authorId: user.id,
-						emoji: reaction.emoji.name,
-						// emojiRoles: {},
-						// title: 'Title',
-						// color: undefined,
-					})
+					.setData(new MessageReactionListenerData(listener.id, user.id, reaction.emoji.name))
 			)
 			.then(() =>
 				{
