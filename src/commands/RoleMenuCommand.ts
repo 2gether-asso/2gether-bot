@@ -3,24 +3,11 @@ import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageLi
 
 import AbstractCommand from './AbstractCommand'
 
-class MessageReactionListenerDataEmojiRoles extends AbstractDBMapType<string, Discord.Snowflake>
-{
-	public unserialize(other: any): this
-	{
-		for (const key in other)
-		{
-			this.set(key, other[key])
-		}
-
-		return this
-	}
-}
-
 class MessageReactionListenerData
 {
 	public authorId: Discord.Snowflake
 
-	public emojiRoles: MessageReactionListenerDataEmojiRoles = new MessageReactionListenerDataEmojiRoles()
+	public emojiRoles: { [emoji: string]: Discord.Snowflake } = {}
 
 	public configured: boolean = false
 
@@ -235,14 +222,14 @@ class RoleMenuCommand extends AbstractCommand
 				embed.addField('Status', `⚠️ ${data.status}`, false)
 			}
 
-			if (data.emojiRoles.size <= 0)
+			const emojiRoles = Object.entries(data.emojiRoles)
+			if (emojiRoles.length <= 0)
 			{
 				embed.setDescription(`Rien n'a été configuré pour le moment, j'attends qu'un administrateur ajoute des réactions`)
 			}
 			else
 			{
-				console.log(data.emojiRoles)
-				const rows = Array.from(data.emojiRoles.entries()).map(([emoji, roleId]) =>
+				const rows = emojiRoles.map(([emoji, roleId]) =>
 					{
 						return `${emoji} - <@&${roleId}>`
 					})
@@ -324,7 +311,7 @@ class RoleMenuCommand extends AbstractCommand
 		}
 
 		// Associate the role to the emoji
-		emojis.set(data.emoji, role.id)
+		emojis[data.emoji] = role.id
 
 		// TODO: Check message.deletable ?
 		// TODO: Check permission MANAGE_MESSAGES ?
@@ -370,7 +357,7 @@ class RoleMenuCommand extends AbstractCommand
 		if (data.configured)
 		{
 			// Check for a configured emoji and role
-			const roleId = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
+			const roleId = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
 			if (roleId)
 			{
 				member.roles.add(roleId)
@@ -423,7 +410,7 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const role = reaction.emoji.name ? data.emojiRoles.get(reaction.emoji.name) : undefined
+		const role = reaction.emoji.name ? data.emojiRoles[reaction.emoji.name] : undefined
 		if (role)
 		{
 			member.roles.remove(role)
