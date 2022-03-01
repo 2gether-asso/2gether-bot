@@ -202,7 +202,7 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		dbListener.data.status = status
+		(dbListener.data as MessageReactionListenerData).status = status
 		this.state.save()
 		this.updateMessageEmbed(message, dbListener)
 			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
