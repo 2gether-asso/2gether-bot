@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageListenerRegister, MessageComponentHandler, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageReactionListenerRegister, DBListener, MessageComponentListener } from 'discord-mel'
+import { Discord, ListenerTypes, Mel, MessageComponentHandler, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageReactionListenerRegister, DBListener, MessageComponentListener } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
 
@@ -23,22 +23,6 @@ class MessageReactionListenerData
 		this.authorId = authorId
 		this.title = title
 		this.color = color
-	}
-}
-
-class MessageListenerData
-{
-	public reactionListenerId: Discord.Snowflake
-
-	public authorId: Discord.Snowflake
-
-	public emoji: string | null
-
-	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake, emoji: string | null)
-	{
-		this.reactionListenerId = reactionListenerId
-		this.authorId = authorId
-		this.emoji = emoji
 	}
 }
 
@@ -106,15 +90,6 @@ class RoleMenuCommand extends AbstractCommand
 		this.permissions.add('ADMINISTRATOR')
 
 		this.handlers
-			.set(
-				ListenerTypes.MESSAGE,
-				(new MessageHandler())
-					.setFilter(this.messageHandlerFilter.bind(this))
-					.configureOn(on => on
-						.setCollect(this.messageHandlerOnCollect.bind(this))
-						// .setEnd(this.messageHandlerOnEnd.bind(this))
-					)
-			)
 			.set(
 				ListenerTypes.MESSAGE_REACTION,
 				(new MessageReactionHandler())
@@ -275,81 +250,6 @@ class RoleMenuCommand extends AbstractCommand
 		//	 .catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
 	}
 
-	protected messageHandlerFilter(listener: MessageListener, message: Discord.Message): boolean
-	{
-		const data = listener.getDbListener()?.data as MessageListenerData | undefined
-
-		return data !== undefined
-			&& data.authorId === message.author.id
-			&& !!data.reactionListenerId
-	}
-
-	protected async messageHandlerOnCollect(listener: MessageListener, message: Discord.Message): Promise<void>
-	{
-		// const dbListener = listener.getDbListener()
-		const data = listener.getDbListener()?.data as MessageListenerData | undefined
-		if (!data)
-		{
-			return
-		}
-
-		const dbReactionListener = this.state.db.listeners.get(data.reactionListenerId)
-		if (!dbReactionListener || !dbReactionListener.targetId)
-		{
-			return
-		}
-
-		const resultMessage = await message.channel.messages.fetch(dbReactionListener.targetId)
-			.catch(() => undefined)
-		if (!resultMessage)
-		{
-			return
-		}
-
-		if (!data.emoji)
-		{
-			// Emoji invalid
-			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'invalid_emoji')
-			return
-		}
-
-		const role = message.mentions.roles.first()
-		if (!role)
-		{
-			// Role not found
-			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'invalid_role')
-			return
-		}
-
-		const reactionData = dbReactionListener.data as MessageReactionListenerData
-		const emojis = reactionData.emojiRoles
-		if (Object.values(emojis).includes(role.id))
-		{
-			// Role already registered
-			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'existing_role')
-			return
-		}
-
-		// Associate the role to the emoji
-		emojis[data.emoji] = role.id
-
-		// TODO: Check message.deletable ?
-		// TODO: Check permission MANAGE_MESSAGES ?
-		message.delete()
-			.then(() =>
-				{
-					// Inform the user that the role has been added
-					this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'role_added')
-					listener.end('collected')
-				})
-			.catch(error => this.bot.logger.error('Failed to delete the message', 'RoleMenuCommand', error))
-	}
-
-	// protected messageHandlerOnEnd(reason: string): void
-	// {
-
-	// }
-
 	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
 	{
 		const dbListener = listener.getDbListener()
@@ -478,22 +378,6 @@ class RoleMenuCommand extends AbstractCommand
 							.catch(error => this.bot.logger.error('Failed to edit the message', 'RoleMenuCommand', error))
 					})
 				.catch(error => this.bot.logger.error('Failed to fetch roles', 'RoleMenuCommand', error))
-
-			// Add the reaction listener
-			this.bot.listeners.addFor(listener.message.channel as any,
-				(new MessageListenerRegister())
-					.setCommandId(this.id)
-					.setIdleTimeout(120000) // 2 minutes
-					.setData(new MessageListenerData(listener.id, user.id, reaction.emoji.name))
-			)
-			.then(() =>
-				// Inform the user that the message listener has been created
-				this.updateMessageEmbedStatus(listener.message, dbListener, 'waiting_on_role'))
-			.catch(error =>
-				{
-					// TODO: clean up? delete the message? edit it to say it failed?
-					this.bot.logger.error('An error occurred', 'RoleMenuCommand', error)
-				})
 		}
 	}
 
