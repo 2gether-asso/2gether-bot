@@ -318,23 +318,24 @@ class RoleMenuCommand extends AbstractCommand
 
 	// }
 
-	protected messageReactionHandlerFilter(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): boolean
+	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
 	{
 		const dbListener = listener.getDbListener()
 
 		return dbListener !== undefined
+			&& listener.message.guild !== null
 			&& user.bot === false // Ignore bot reactions
 	}
 
-	protected async messageReactionHandlerOnCollect(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
+	protected async messageReactionHandlerOnCollect(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
 	{
 		const dbListener = listener.getDbListener()
-		if (!dbListener || !message.guild)
+		if (!dbListener || !listener.message.guild)
 		{
 			return
 		}
 
-		const member = await message.guild.members.fetch(user).catch(() => undefined)
+		const member = await listener.message.guild.members.fetch(user).catch(() => undefined)
 		if (!member)
 		{
 			this.bot.logger.error(`Failed to fetch member ${user.id}`, 'RoleMenuCommand')
@@ -360,7 +361,7 @@ class RoleMenuCommand extends AbstractCommand
 		else if (member.permissions.has('ADMINISTRATOR'))
 		{
 			// Add the reaction listener
-			this.bot.listeners.addFor(message.channel as any,
+			this.bot.listeners.addFor(listener.message.channel as any,
 				(new MessageListenerRegister())
 					.setCommandId(this.id)
 					.setIdleTimeout(120000) // 2 minutes
@@ -372,7 +373,7 @@ class RoleMenuCommand extends AbstractCommand
 					data.status = 'waiting_on_reaction'
 					this.state.save()
 
-					return this.updateMessageEmbed(message, dbListener)
+					return this.updateMessageEmbed(listener.message, dbListener)
 				})
 			.catch(error =>
 				{
@@ -382,16 +383,16 @@ class RoleMenuCommand extends AbstractCommand
 		}
 	}
 
-	protected async messageReactionHandlerOnRemove(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
+	protected async messageReactionHandlerOnRemove(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
 	{
 		// const dbListener = listener.getDbListener()
 		const data = listener.getDbListener()?.data as MessageReactionListenerData | undefined
-		if (!data || !message.guild)
+		if (!data || !listener.message.guild)
 		{
 			return
 		}
 
-		const member = await message.guild.members.fetch(user).catch(() => undefined)
+		const member = await listener.message.guild.members.fetch(user).catch(() => undefined)
 		if (!member)
 		{
 			this.bot.logger.error(`Failed to fetch member ${user.id}`, 'RoleMenuCommand')
@@ -409,9 +410,9 @@ class RoleMenuCommand extends AbstractCommand
 		}
 	}
 
-	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, message: Discord.Message, collected: any[], reason: string): void
+	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, collected: any[], reason: string): void
 	{
-		message.edit(
+		listener.message.edit(
 			{
 				content: '_Menu de sélection des rôles terminé._',
 				embeds: [],

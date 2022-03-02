@@ -168,9 +168,9 @@ class ActivitRankCommand extends AbstractCommand
 		return embed;
 	}
 
-	protected messageReactionHandlerFilter(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): boolean
+	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
 	{
-		const data = this.state.db.listeners.get(message.id)?.data
+		const data = this.state.db.listeners.get(listener.message.id)?.data
 
 		// Ignore reactions from other users & other emojis
 		return data !== undefined
@@ -178,12 +178,13 @@ class ActivitRankCommand extends AbstractCommand
 			&& Object.values(data.emojis).includes(reaction.emoji.name)
 	}
 
-	protected messageReactionHandlerOnCollect(listener: MessageReactionListener, message: Discord.Message, reaction: Discord.MessageReaction, user: Discord.User): void
+	protected messageReactionHandlerOnCollect(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): void
 	{
 		// Remove the user reaction
 		reaction.users.remove(user)
 			.catch(e => this.bot.logger.error(e))
 
+		const message = listener.message
 		const data = this.state.db.listeners.get(message.id)?.data
 		const collector = (this.bot.listeners.get(message.id) as MessageReactionListener | undefined)?.collector
 
@@ -228,8 +229,10 @@ class ActivitRankCommand extends AbstractCommand
 		this.updateEmbed(message).then(embed => message.edit({ embeds: [embed] }));
 	}
 
-	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, message: Discord.Message, collected: any, reason: string): void
+	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, collected: any, reason: string): void
 	{
+		const message = listener.message
+
 		if (reason === 'freeze') {
 			message.edit(`Voici les meilleurs du classement !`)
 
