@@ -3,19 +3,6 @@ import { Discord, ListenerTypes, Mel, MessageHandler, MessageListener, MessageLi
 
 import AbstractCommand from './AbstractCommand'
 
-class MessageComponentListenerData
-{
-	public reactionListenerId: Discord.Snowflake
-
-	public authorId: Discord.Snowflake
-
-	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake)
-	{
-		this.reactionListenerId = reactionListenerId
-		this.authorId = authorId
-	}
-}
-
 class MessageReactionListenerData
 {
 	public authorId: Discord.Snowflake
@@ -52,6 +39,19 @@ class MessageListenerData
 		this.reactionListenerId = reactionListenerId
 		this.authorId = authorId
 		this.emoji = emoji
+	}
+}
+
+class MessageComponentFinishListenerData
+{
+	public reactionListenerId: Discord.Snowflake
+
+	public authorId: Discord.Snowflake
+
+	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake)
+	{
+		this.reactionListenerId = reactionListenerId
+		this.authorId = authorId
 	}
 }
 
@@ -113,12 +113,15 @@ class RoleMenuCommand extends AbstractCommand
 			)
 			.set(
 				ListenerTypes.MESSAGE_COMPONENT,
-				(new MessageComponentHandler())
-					.setFilter(this.messageComponentHandlerFilter.bind(this))
-					.configureOn(on => on
-						.setCollect(this.messageComponentHandlerOnCollect.bind(this))
-						.setEnd(this.messageComponentHandlerOnEnd.bind(this))
-					)
+				new Map()
+					.set(this.COMPONENT_FINISH,
+						(new MessageComponentHandler())
+							.setFilter(this.messageComponentFinishHandlerFilter.bind(this))
+							.configureOn(on => on
+								.setCollect(this.messageComponentFinishHandlerOnCollect.bind(this))
+								.setEnd(this.messageComponentFinishHandlerOnEnd.bind(this))
+								)
+						)
 			)
 	}
 
@@ -167,8 +170,9 @@ class RoleMenuCommand extends AbstractCommand
 									this.bot.listeners.addFor(updatedMessage,
 										(new MessageComponentListenerRegister())
 											.setCommandId(this.id)
+											.setVariant(this.COMPONENT_FINISH)
 											.setIdleTimeout(120000) // 2 minutes
-											.setData(new MessageComponentListenerData(listener.id, interaction.user.id))
+											.setData(new MessageComponentFinishListenerData(listener.id, interaction.user.id))
 									)))
 						.then(() => interaction.reply({ content: 'C\'est bon !', ephemeral: true }))
 						.catch(error =>
@@ -481,16 +485,17 @@ class RoleMenuCommand extends AbstractCommand
 			})
 	}
 
-	protected messageComponentHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
+	protected messageComponentFinishHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
 	{
-		const dbListener = listener.getDbListener()
+		const data = listener.getDbListener()?.data as MessageComponentFinishListenerData | undefined
 
-		return dbListener !== undefined
+		return data !== undefined
 			&& interaction.isButton()
 			&& interaction.customId === this.COMPONENT_FINISH
+			&& interaction.user.id === data.authorId
 	}
 
-	protected messageComponentHandlerOnCollect(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): void
+	protected messageComponentFinishHandlerOnCollect(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): void
 	{
 		interaction.deferUpdate()
 
@@ -500,7 +505,7 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		const data = dbListener.data as MessageComponentListenerData
+		const data = dbListener.data as MessageComponentFinishListenerData
 
 		const dbReactionListener = this.state.db.listeners.get(data.reactionListenerId)
 		if (!dbReactionListener)
@@ -526,10 +531,13 @@ class RoleMenuCommand extends AbstractCommand
 			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
 	}
 
-	protected messageComponentHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
+	protected messageComponentFinishHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
 	{
-		// Remove the listener button component
-		listener.message.edit({ components: [] })
+		// Delete the first action row
+		const components = listener.message.components.slice(1)
+
+		// Remove the listener select role components
+		listener.message.edit({ components: components })
 			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
 	}
 }
