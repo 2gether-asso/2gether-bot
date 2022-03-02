@@ -55,6 +55,22 @@ class MessageComponentFinishListenerData
 	}
 }
 
+class MessageComponentSelectRoleListenerData
+{
+	public reactionListenerId: Discord.Snowflake
+
+	public authorId: Discord.Snowflake
+
+	public emoji: string | null
+
+	public constructor(reactionListenerId: Discord.Snowflake, authorId: Discord.Snowflake, emoji: string | null)
+	{
+		this.reactionListenerId = reactionListenerId
+		this.authorId = authorId
+		this.emoji = emoji
+	}
+}
+
 class RoleMenuCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
@@ -82,7 +98,9 @@ class RoleMenuCommand extends AbstractCommand
 			)
 
 		// Components
-		this.componentIds.add(this.COMPONENT_FINISH)
+		this.componentIds
+			.add(this.COMPONENT_FINISH)
+			.add(this.COMPONENT_SELECT_ROLE)
 
 		this.guildOnly = true
 		this.permissions.add('ADMINISTRATOR')
@@ -120,6 +138,14 @@ class RoleMenuCommand extends AbstractCommand
 							.configureOn(on => on
 								.setCollect(this.messageComponentFinishHandlerOnCollect.bind(this))
 								.setEnd(this.messageComponentFinishHandlerOnEnd.bind(this))
+								)
+						)
+					.set(this.COMPONENT_SELECT_ROLE,
+						(new MessageComponentHandler())
+							.setFilter(this.messageComponentSelectRoleHandlerFilter.bind(this))
+							.configureOn(on => on
+								.setCollect(this.messageComponentSelectRoleHandlerOnCollect.bind(this))
+								.setEnd(this.messageComponentSelectRoleHandlerOnEnd.bind(this))
 								)
 						)
 			)
@@ -419,13 +445,36 @@ class RoleMenuCommand extends AbstractCommand
 														({
 															label: role.name, // `${role.name} (id: ${role.id})`,
 															value: role.id
-														})))))
+														}))
+													)
+											)
+										)
 							})
 
 						listener.message.edit(
 							{
 								components: components,
 							})
+							.then(updatedMessage =>
+								{
+									this.bot.listeners.addFor(updatedMessage,
+										(new MessageComponentListenerRegister())
+											.setCommandId(this.id)
+											.setVariant(this.COMPONENT_SELECT_ROLE)
+											.setIdleTimeout(120000) // 2 minutes
+											.setData(new MessageComponentSelectRoleListenerData(listener.id, user.id, reaction.emoji.name))
+										)
+
+										.then(() =>
+											// Inform the user that the message listener has been created
+											this.updateMessageEmbedStatus(listener.message, dbListener, 'waiting_on_role'))
+										.catch(error =>
+											{
+												// TODO: clean up? delete the components?
+												this.updateMessageEmbedStatus(listener.message, dbListener, 'waiting_on_role_failed')
+												this.bot.logger.error('Failed to create a component listener for the select role menu', 'RoleMenuCommand', error)
+											})
+								})
 							.catch(error => this.bot.logger.error('Failed to edit the message', 'RoleMenuCommand', error))
 					})
 				.catch(error => this.bot.logger.error('Failed to fetch roles', 'RoleMenuCommand', error))
@@ -535,6 +584,86 @@ class RoleMenuCommand extends AbstractCommand
 	{
 		// Delete the first action row
 		const components = listener.message.components.slice(1)
+
+		// Remove the listener select role components
+		listener.message.edit({ components: components })
+			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
+	}
+
+	protected messageComponentSelectRoleHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
+	{
+		const data = listener.getDbListener()?.data as MessageComponentFinishListenerData | undefined
+
+		return data !== undefined
+			&& interaction.isSelectMenu()
+			&& interaction.customId === this.COMPONENT_SELECT_ROLE
+			&& interaction.user.id === data.authorId
+			&& interaction.values.length >= 1
+	}
+
+	protected async messageComponentSelectRoleHandlerOnCollect(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): Promise<void>
+	{
+		interaction.deferUpdate()
+
+		if (!interaction.guild || !interaction.isSelectMenu())
+		{
+			return
+		}
+
+		const data = listener.getDbListener()?.data as MessageComponentSelectRoleListenerData | undefined
+		if (!data)
+		{
+			return
+		}
+
+		const dbReactionListener = this.state.db.listeners.get(data.reactionListenerId)
+		if (!dbReactionListener || !dbReactionListener.targetId)
+		{
+			return
+		}
+
+		if (!data.emoji)
+		{
+			// Emoji invalid
+			this.updateMessageEmbedStatus(listener.message, dbReactionListener, 'invalid_emoji')
+			return
+		}
+
+		const role = await interaction.guild.roles.fetch(interaction.values[0]).catch(() => null)
+		if (!role)
+		{
+			// Role invalid or not found
+			this.updateMessageEmbedStatus(listener.message, dbReactionListener, 'invalid_role')
+			return
+		}
+
+		const reactionData = dbReactionListener.data as MessageReactionListenerData
+		const emojis = reactionData.emojiRoles
+		if (Object.values(emojis).includes(role.id))
+		{
+			// Role already registered
+			this.updateMessageEmbedStatus(listener.message, dbReactionListener, 'existing_role')
+			return
+		}
+
+		// Associate the role to the emoji
+		emojis[data.emoji] = role.id
+
+		this.updateMessageEmbedStatus(listener.message, dbReactionListener, 'role_added')
+			.then(() =>
+				{
+					// Stop the select menu component listener
+					listener.end('collected')
+
+					interaction.editReply({ content: 'La configuration du menu a été enregistrée !' })
+				})
+			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
+	}
+
+	protected messageComponentSelectRoleHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
+	{
+		// Delete all action rows but the first
+		const components = listener.message.components.slice(0, 1)
 
 		// Remove the listener select role components
 		listener.message.edit({ components: components })
