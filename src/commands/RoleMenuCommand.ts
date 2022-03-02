@@ -105,7 +105,7 @@ class RoleMenuCommand extends AbstractCommand
 					)
 					.configureOn(on => on
 						.setCollect(this.messageReactionHandlerOnCollect.bind(this))
-						// .setRemove(this.messageReactionHandlerOnRemove.bind(this))
+						.setRemove(this.messageReactionHandlerOnRemove.bind(this))
 						// .setEnd(this.messageReactionHandlerOnEnd.bind(this))
 					)
 			)
