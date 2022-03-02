@@ -410,6 +410,7 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, collected: any[], reason: string): void
 	{
+		listener.message.reactions.removeAll()
 		listener.message.edit(
 			{
 				content: '_Menu de sélection des rôles terminé._',
@@ -532,6 +533,10 @@ class RoleMenuCommand extends AbstractCommand
 
 		// Associate the role to the emoji
 		emojis[data.emoji] = role.id
+
+		// Confirm the associated emoji
+		listener.message.react(data.emoji)
+			.catch(error => this.bot.logger.warn('Failed to react to the message', 'RoleMenuCommand', error))
 
 		this.updateMessageEmbedStatus(listener.message, dbReactionListener, 'role_added')
 			.then(() =>
