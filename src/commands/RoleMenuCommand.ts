@@ -61,6 +61,8 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected readonly COMPONENT_FINISH = `${this.id}:finish`
 
+	protected readonly COMPONENT_SELECT_ROLE = `${this.id}:select_role`
+
 	constructor(id: string, bot: Mel)
 	{
 		super(id, bot)
@@ -360,6 +362,70 @@ class RoleMenuCommand extends AbstractCommand
 		}
 		else if (member.permissions.has('ADMINISTRATOR'))
 		{
+			const guild = listener.message.guild
+			guild.roles.fetch()
+				.then(rolesCollection =>
+					{
+						// Discord guilds can have up to 250 roles, so we need to split roles for the select menus
+
+						// Convert roles to an array and sort them by name
+						const roles = Array.from(rolesCollection.values())
+							.sort((a, b) => a.name.localeCompare(b.name))
+
+						// Remove the @everyone role index
+						const everyoneRoleIndex = roles.findIndex(role => role.id === guild.roles.everyone.id)
+						roles.splice(everyoneRoleIndex, 1)
+
+						// Split the roles into chunks of 25 roles
+						const rolesChunks = []
+						const chunkSize = 25
+						for (let i = 0, j = roles.length; i < j; i += chunkSize)
+						{
+							const rolesChunk = roles.slice(i, i + chunkSize)
+							rolesChunks.push(rolesChunk)
+						}
+
+						// Split the roles chunks into groups of 5 chunks
+						const rolesGroups = []
+						const groupSize = 5
+						for (let i = 0, j = rolesChunks.length; i < j; i += groupSize)
+						{
+							const rolesGroup = rolesChunks.slice(i, i + groupSize)
+							rolesGroups.push(rolesGroup)
+						}
+
+						// We get:
+						// 250 roles => 10 chunks of 25 roles => 2 groups of 5 chunks of 25 roles
+
+						const components = Array.from(listener.message.components)
+
+						// Generate and update the select menus
+						rolesGroups.forEach((rolesGroup, index) =>
+							{
+								components[index + 1] = new Discord.MessageActionRow()
+									.addComponents(
+										...rolesGroup.map(rolesChunk =>
+											new Discord.MessageSelectMenu()
+												.setCustomId(this.COMPONENT_SELECT_ROLE)
+												.setMinValues(1)
+												.setMaxValues(1)
+												.setPlaceholder('Choisis un rôle')
+												.setOptions(
+													...rolesChunk.map(role =>
+														({
+															label: role.name, // `${role.name} (id: ${role.id})`,
+															value: role.id
+														})))))
+							})
+
+						listener.message.edit(
+							{
+								components: components,
+							})
+							.catch(error => this.bot.logger.error('Failed to edit the message', 'RoleMenuCommand', error))
+					})
+				.catch(error => this.bot.logger.error('Failed to fetch roles', 'RoleMenuCommand', error))
+
 			// Add the reaction listener
 			this.bot.listeners.addFor(listener.message.channel as any,
 				(new MessageListenerRegister())
@@ -368,13 +434,8 @@ class RoleMenuCommand extends AbstractCommand
 					.setData(new MessageListenerData(listener.id, user.id, reaction.emoji.name))
 			)
 			.then(() =>
-				{
-					// Update the embed to inform the user that the reaction listener has been created
-					data.status = 'waiting_on_reaction'
-					this.state.save()
-
-					return this.updateMessageEmbed(listener.message, dbListener)
-				})
+				// Inform the user that the message listener has been created
+				this.updateMessageEmbedStatus(listener.message, dbListener, 'waiting_on_role'))
 			.catch(error =>
 				{
 					// TODO: clean up? delete the message? edit it to say it failed?
