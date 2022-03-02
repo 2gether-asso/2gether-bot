@@ -148,7 +148,8 @@ class RoleMenuCommand extends AbstractCommand
 								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélection des rôles'))
 						)
 						.then(listener =>
-							this.updateMessageEmbed(message, listener.getDbListener())
+							// Inform the user that the message listener has been created
+							this.updateMessageEmbedStatus(message, listener.getDbListener(), 'waiting_on_reaction')
 								.then(updatedMessage => updatedMessage.edit(
 									{
 										content: null,
@@ -232,17 +233,16 @@ class RoleMenuCommand extends AbstractCommand
 		return message.edit({ embeds: [ embed ] })
 	}
 
-	protected saveEmbedStatus(message: Discord.Message, dbListener: DBListener | undefined, status: string): void
+	protected updateMessageEmbedStatus(message: Discord.Message, dbReactionListener: DBListener | undefined, status: string): Promise<Discord.Message>
 	{
-		if (!dbListener)
+		if (dbReactionListener)
 		{
-			return
+			(dbReactionListener.data as MessageReactionListenerData).status = status
+			this.state.save()
 		}
 
-		(dbListener.data as MessageReactionListenerData).status = status
-		this.state.save()
-		this.updateMessageEmbed(message, dbListener)
-			.catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
+		return this.updateMessageEmbed(message, dbReactionListener)
+		//	 .catch(error => this.bot.logger.error('Failed to update the embed', 'RoleMenuCommand', error))
 	}
 
 	protected messageHandlerFilter(listener: MessageListener, message: Discord.Message): boolean
@@ -279,7 +279,7 @@ class RoleMenuCommand extends AbstractCommand
 		if (!data.emoji)
 		{
 			// Emoji invalid
-			this.saveEmbedStatus(resultMessage, dbReactionListener, 'invalid_emoji')
+			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'invalid_emoji')
 			return
 		}
 
@@ -287,7 +287,7 @@ class RoleMenuCommand extends AbstractCommand
 		if (!role)
 		{
 			// Role not found
-			this.saveEmbedStatus(resultMessage, dbReactionListener, 'invalid_role')
+			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'invalid_role')
 			return
 		}
 
@@ -296,7 +296,7 @@ class RoleMenuCommand extends AbstractCommand
 		if (Object.values(emojis).includes(role.id))
 		{
 			// Role already registered
-			this.saveEmbedStatus(resultMessage, dbReactionListener, 'existing_role')
+			this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'existing_role')
 			return
 		}
 
@@ -309,7 +309,7 @@ class RoleMenuCommand extends AbstractCommand
 			.then(() =>
 				{
 					// Inform the user that the role has been added
-					this.saveEmbedStatus(resultMessage, dbReactionListener, 'role_added')
+					this.updateMessageEmbedStatus(resultMessage, dbReactionListener, 'role_added')
 					listener.end('collected')
 				})
 			.catch(error => this.bot.logger.error('Failed to delete the message', 'RoleMenuCommand', error))
