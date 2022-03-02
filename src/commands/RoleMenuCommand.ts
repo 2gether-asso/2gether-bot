@@ -106,7 +106,7 @@ class RoleMenuCommand extends AbstractCommand
 					.configureOn(on => on
 						.setCollect(this.messageReactionHandlerOnCollect.bind(this))
 						.setRemove(this.messageReactionHandlerOnRemove.bind(this))
-						// .setEnd(this.messageReactionHandlerOnEnd.bind(this))
+						.setEnd(this.messageReactionHandlerOnEnd.bind(this))
 					)
 			)
 			.set(
@@ -143,7 +143,7 @@ class RoleMenuCommand extends AbstractCommand
 							(new MessageReactionListenerRegister())
 								.setCommandId(this.id)
 								.setIdleTimeout(120000) // 2 minutes
-								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélectionner des rôles'))
+								.setData(new MessageReactionListenerData(interaction.user.id, 'Menu de sélection des rôles'))
 						)
 						.then(listener =>
 							this.updateMessageEmbed(message, listener.getDbListener())
@@ -409,10 +409,15 @@ class RoleMenuCommand extends AbstractCommand
 		}
 	}
 
-	// protected messageReactionHandlerOnEnd(message: Discord.Message, collected: any, reason: string): void
-	// {
-
-	// }
+	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, message: Discord.Message, collected: any[], reason: string): void
+	{
+		message.edit(
+			{
+				content: '_Menu de sélection des rôles terminé._',
+				embeds: [],
+				components: [],
+			})
+	}
 
 	protected messageComponentHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
 	{
