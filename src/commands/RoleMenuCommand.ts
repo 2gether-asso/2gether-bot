@@ -327,12 +327,10 @@ class RoleMenuCommand extends AbstractCommand
 						// We get:
 						// 250 roles => 10 chunks of 25 roles => 2 groups of 5 chunks of 25 roles
 
-						const components = Array.from(listener.message.components)
-
 						// Generate and update the select menus
 						rolesGroups.forEach((rolesGroup, index) =>
 							{
-								components[index + 1] = new Discord.MessageActionRow()
+								listener.message.components[index + 1] = new Discord.MessageActionRow()
 									.addComponents(
 										...rolesGroup.map(rolesChunk =>
 											new Discord.MessageSelectMenu()
@@ -353,7 +351,7 @@ class RoleMenuCommand extends AbstractCommand
 
 						listener.message.edit(
 							{
-								components: components,
+								components: listener.message.components,
 							})
 							.then(updatedMessage =>
 								{
@@ -468,10 +466,10 @@ class RoleMenuCommand extends AbstractCommand
 	protected messageComponentFinishHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
 	{
 		// Delete the first action row
-		const components = listener.message.components.slice(1)
+		listener.message.components = listener.message.components.slice(1)
 
 		// Remove the listener select role components
-		listener.message.edit({ components: components })
+		listener.message.edit({ components: listener.message.components })
 			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
 	}
 
@@ -552,10 +550,10 @@ class RoleMenuCommand extends AbstractCommand
 	protected messageComponentSelectRoleHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
 	{
 		// Delete all action rows but the first
-		const components = listener.message.components.slice(0, 1)
+		listener.message.components = listener.message.components.slice(0, 1)
 
 		// Remove the listener select role components
-		listener.message.edit({ components: components })
+		listener.message.edit({ components: listener.message.components })
 			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
 	}
 }
