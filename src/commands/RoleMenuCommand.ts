@@ -408,6 +408,11 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, collected: any[], reason: string): void
 	{
+		if (reason === 'messageDelete')
+		{
+			return
+		}
+
 		listener.message.reactions.removeAll()
 		listener.message.edit(
 			{
@@ -465,6 +470,11 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected messageComponentFinishHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
 	{
+		if (reason === 'messageDelete')
+		{
+			return
+		}
+
 		// Delete the first action row
 		listener.message.components = listener.message.components.slice(1)
 
@@ -549,6 +559,11 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected messageComponentSelectRoleHandlerOnEnd(listener: MessageComponentListener, collected: any[], reason: string): void
 	{
+		if (reason === 'messageDelete')
+		{
+			return
+		}
+
 		// Delete all action rows but the first
 		listener.message.components = listener.message.components.slice(0, 1)
 
