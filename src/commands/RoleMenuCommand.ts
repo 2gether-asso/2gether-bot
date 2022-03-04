@@ -475,11 +475,8 @@ class RoleMenuCommand extends AbstractCommand
 			return
 		}
 
-		// Delete the first action row
-		listener.message.components = listener.message.components.slice(1)
-
-		// Remove the listener select role components
-		listener.message.edit({ components: listener.message.components })
+		// Remove all components
+		listener.message.edit({ components: [] })
 			.catch(error => this.bot.logger.error('Failed to remove the listener button component', 'RoleMenuCommand', error))
 	}
 
