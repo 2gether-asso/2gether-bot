@@ -218,61 +218,10 @@ class RoleMenuCommand extends AbstractCommand
 				embed.addField('Status', `⚠️ ${data.status}`, false)
 			}
 
-			const dateDiff = (dateA: Date, dateB: Date, long_format: boolean = false): string =>
-				{
-					const diffSeconds = Math.abs(dateA.getTime() - dateB.getTime()) / 1000
-					const diffMinutes = diffSeconds / 60
-					const diffHours = diffMinutes / 60
-					const diffDays = diffHours / 24
-
-					const days = Math.floor(diffDays)
-					const hours = Math.floor(diffHours % 24)
-					const minutes = Math.floor(diffMinutes % 60)
-					const seconds = Math.floor(diffSeconds % 60)
-
-					if (days > 0)
-					{
-						return long_format
-							? `${days} jours, ${hours} heures, ${minutes} minutes et ${seconds} secondes`
-							: `${days}j ${hours}h ${minutes}m ${seconds}s`
-					}
-
-					if (hours > 0)
-					{
-						return long_format
-							? `${hours} heures, ${minutes} minutes et ${seconds} secondes`
-							: `${hours}h ${minutes}m ${seconds}s`
-					}
-
-					if (minutes > 0)
-					{
-						return long_format
-							? `${minutes} minutes et ${seconds} secondes`
-							: `${minutes}m ${seconds}s`
-					}
-
-					return long_format
-						? `${seconds} secondes`
-						: `${seconds}s`
-				}
-
-			let timeoutString = ''
 			if (dbReactionListener.timeout !== undefined)
 			{
-				const timeoutDate = new Date(dbReactionListener.timeout)
-				timeoutString += `${timeoutDate.toLocaleString('fr-FR')} (${dateDiff(new Date(), timeoutDate, true)})`
+				embed.addField('Date de fin', `${new Date(dbReactionListener.timeout).toLocaleString('fr-FR')}`, false)
 			}
-			if (dbReactionListener.idleTimeout !== undefined)
-			{
-				if (dbReactionListener.timeout !== undefined)
-				{
-					timeoutString += `\n`
-				}
-
-				const idleDate = new Date(dbReactionListener.lastCallTime + dbReactionListener.idleTimeout)
-				timeoutString += `${idleDate.toLocaleString('fr-FR')} (${dateDiff(new Date(), idleDate, true)}) si aucune intéraction`
-			}
-			embed.addField('Date de fin', timeoutString, false)
 
 			const emojiRoles = Object.entries(data.emojiRoles)
 			if (emojiRoles.length <= 0)
