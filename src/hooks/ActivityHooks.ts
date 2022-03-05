@@ -1,5 +1,5 @@
-import { Mel, Discord, HooksManager, Translator } from 'discord-mel'
-import Logger from 'discord-mel/dist/logger/Logger'
+import { Mel, Discord } from 'discord-mel'
+
 import Config from '../config/Config'
 import Activity from '../config/types/Activity'
 import State from '../state/State'
@@ -7,29 +7,23 @@ import { UserActivityCooldown } from '../state/types/UserActivity'
 
 class ActivityHooks
 {
-	private readonly bot: Mel
-	private readonly config: Config
-	private readonly hooks: HooksManager
-	private readonly logger: Logger
-	private readonly state: State
-	private readonly translator: Translator
+	protected readonly bot: Mel
+	protected readonly config: Config
+	protected readonly state: State
 
-	constructor(bot: Mel)
+	public constructor(bot: Mel)
 	{
 		this.bot = bot
 		this.config = this.bot.config as Config
-		this.hooks = this.bot.hooks
-		this.logger = this.bot.logger
 		this.state = this.bot.state as State
-		this.translator = this.bot.translator
 
 		// Register hook callbacks
-		this.hooks.get('messageCreate').add(this.onMessageCreate.bind(this))
-		this.hooks.get('voiceStateUpdate').add(this.onVoiceStateUpdate.bind(this))
+		this.bot.hooks.get('messageCreate').add(this.onMessageCreate.bind(this))
+		this.bot.hooks.get('voiceStateUpdate').add(this.onVoiceStateUpdate.bind(this))
 	}
 
-	private async onMessageCreate(message: Discord.Message
-	                              ): Promise<void>
+	protected async onMessageCreate(message: Discord.Message
+	                                ): Promise<void>
 	{
 		// Ignore messages not from guilds
 		const guild = message.guild
@@ -47,13 +41,13 @@ class ActivityHooks
 
 		const delta = activityConfig.rewards['message']
 
-		this.logger.debug(`Message activity for ${member.user.username}`, 'ActivityHooks')
+		this.bot.logger.debug(`Message activity for ${member.user.username}`, 'ActivityHooks')
 		this.addUserActivity(member, delta, activityConfig, 'message')
 	}
 
-	private async onVoiceStateUpdate(oldState: Discord.VoiceState,
-	                                 newState: Discord.VoiceState,
-	                                 ): Promise<void>
+	protected async onVoiceStateUpdate(oldState: Discord.VoiceState,
+	                                   newState: Discord.VoiceState,
+	                                   ): Promise<void>
 	{
 		// Ignore bots
 		const member = newState.member
@@ -62,7 +56,7 @@ class ActivityHooks
 		// Member connected and not muted (active)
 		if (newState.channelId && !newState.mute)
 		{
-			this.logger.debug(`${member.user.username}: Voice activity starts`, 'ActivityHooks')
+			this.bot.logger.debug(`${member.user.username}: Voice activity starts`, 'ActivityHooks')
 
 			this.state.setState(db =>
 				{
@@ -92,16 +86,16 @@ class ActivityHooks
 			userActivity.voiceSince = -1
 
 			// Rewards the member for the session
-			this.logger.debug(`${member.user.username}: Voice activity ends after ${timeSeconds} seconds`, 'ActivityHooks')
+			this.bot.logger.debug(`${member.user.username}: Voice activity ends after ${timeSeconds} seconds`, 'ActivityHooks')
 			this.addUserActivity(member, delta, activityConfig)
 		}
 	}
 
-	private async addUserActivity(member: Discord.GuildMember,
-								  delta: number,
-								  activityConfig: Activity,
-								  cooldownKey: UserActivityCooldown | undefined = undefined,
-								  ): Promise<void>
+	protected async addUserActivity(member: Discord.GuildMember,
+	                                delta: number,
+									activityConfig: Activity,
+									cooldownKey: UserActivityCooldown | undefined = undefined,
+									): Promise<void>
 	{
 		// Get user activity (or initialize it)
 		const userActivity = this.state.db.activities.getUser(member.id)
@@ -112,17 +106,17 @@ class ActivityHooks
 			if (userActivity.cooldowns[cooldownKey] > Date.now())
 			{
 				const secondsLeft = Math.round((userActivity.cooldowns[cooldownKey] - Date.now()) / 1000)
-				this.logger.debug(`${member.user.username}: ${secondsLeft} seconds cooldown left (${cooldownKey})`, 'ActivityHooks')
+				this.bot.logger.debug(`${member.user.username}: ${secondsLeft} seconds cooldown left (${cooldownKey})`, 'ActivityHooks')
 				return
 			}
 
-			this.logger.debug(`${member.user.username}: Set ${activityConfig.cooldown} seconds cooldown (${cooldownKey})`, 'ActivityHooks')
+			this.bot.logger.debug(`${member.user.username}: Set ${activityConfig.cooldown} seconds cooldown (${cooldownKey})`, 'ActivityHooks')
 			userActivity.cooldowns[cooldownKey] = Date.now() + (activityConfig.cooldown * 1000)
 		}
 
 		// Add delta to user activity score
 		userActivity.score += delta
-		this.logger.debug(`${member.user.username}: Score is now ${userActivity.score} (${delta >= 0 ? '+' : '-'}${Math.abs(delta)})`, 'ActivityHooks')
+		this.bot.logger.debug(`${member.user.username}: Score is now ${userActivity.score} (${delta >= 0 ? '+' : '-'}${Math.abs(delta)})`, 'ActivityHooks')
 
 		// Get the user current ranking index
 		let rankIndex = this.state.db.activities.ranking.indexOf(member.id)
@@ -160,7 +154,7 @@ class ActivityHooks
 
 		// Update the user ranking
 		const nbRanking = this.state.db.activities.ranking.length
-		this.logger.debug(`${member.user.username}: Ranked #${newRankIndex + 1} (out of #${nbRanking})`, 'ActivityHooks')
+		this.bot.logger.debug(`${member.user.username}: Ranked #${newRankIndex + 1} (out of #${nbRanking})`, 'ActivityHooks')
 		this.state.db.activities.ranking.splice(
 			newRankIndex, 0,
 			...this.state.db.activities.ranking.splice(rankIndex, 1)
@@ -189,7 +183,7 @@ class ActivityHooks
 
 				// Fetch concurrent member
 				const concurrent = await member.guild.members.fetch(this.state.db.activities.ranking[j])
-					.catch(e => this.logger.warn(e, 'ActivityHooks'))
+					.catch(e => this.bot.logger.warn(e, 'ActivityHooks'))
 
 				if (concurrent?.id)
 				{
@@ -202,8 +196,8 @@ class ActivityHooks
 						if (concurrent.roles.cache.has(rankingRole.role))
 						{
 							await concurrent.roles.remove(rankingRole.role)
-								.then(() => this.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
-								.catch(e => this.logger.error(e))
+								.then(() => this.bot.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
+								.catch(e => this.bot.logger.error(e))
 						}
 					}
 
@@ -212,8 +206,8 @@ class ActivityHooks
 					if (!concurrent.roles.cache.has(newRankingRole.role))
 					{
 						await concurrent.roles.add(newRankingRole.role)
-							.then(() => this.logger.debug(`${concurrent.user.username}: Added ranking role for rank #${newRankingRole.rank}`, 'ActivityHooks'))
-							.catch(e => this.logger.error(e))
+							.then(() => this.bot.logger.debug(`${concurrent.user.username}: Added ranking role for rank #${newRankingRole.rank}`, 'ActivityHooks'))
+							.catch(e => this.bot.logger.error(e))
 					}
 				}
 
@@ -234,8 +228,8 @@ class ActivityHooks
 					if (concurrent.roles.cache.has(rankingRole.role))
 					{
 						await concurrent.roles.remove(rankingRole.role)
-							.then(() => this.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
-							.catch(e => this.logger.error(e))
+							.then(() => this.bot.logger.debug(`${concurrent.user.username}: Removed ranking role for rank #${rankingRole.rank}`, 'ActivityHooks'))
+							.catch(e => this.bot.logger.error(e))
 					}
 				}
 
@@ -257,8 +251,8 @@ class ActivityHooks
 					if (!concurrent.roles.cache.has(newThresholdRole.role))
 					{
 						await concurrent.roles.add(newThresholdRole.role)
-							.then(() => this.logger.debug(`${concurrent.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
-							.catch(e => this.logger.error(e))
+							.then(() => this.bot.logger.debug(`${concurrent.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
+							.catch(e => this.bot.logger.error(e))
 					}
 				}
 			}
@@ -282,8 +276,8 @@ class ActivityHooks
 				if (!member.roles.cache.has(newThresholdRole.role))
 				{
 					await member.roles.add(newThresholdRole.role)
-						.then(() => this.logger.debug(`${member.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
-						.catch(e => this.logger.error(e))
+						.then(() => this.bot.logger.debug(`${member.user.username}: Added threshold role for threshold #${newThresholdRole.threshold}`, 'ActivityHooks'))
+						.catch(e => this.bot.logger.error(e))
 				}
 			}
 		}
@@ -297,8 +291,8 @@ class ActivityHooks
 			if (member.roles.cache.has(thresholdRole.role))
 			{
 				await member.roles.remove(thresholdRole.role)
-					.then(() => this.logger.debug(`${member.user.username}: Removed threshold role for threshold #${thresholdRole.threshold}`, 'ActivityHooks'))
-					.catch(e => this.logger.error(e))
+					.then(() => this.bot.logger.debug(`${member.user.username}: Removed threshold role for threshold #${thresholdRole.threshold}`, 'ActivityHooks'))
+					.catch(e => this.bot.logger.error(e))
 			}
 		}
 
