@@ -1,4 +1,4 @@
-import { Discord, ListenerTypes, Mel, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
+import { DBListener, Discord, ListenerTypes, Mel, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
 import MessageReactionHandler from 'discord-mel/dist/listeners/handler/MessageReactionHandler'
 
 import AbstractCommand from './AbstractCommand'
@@ -66,7 +66,7 @@ class ActivitRankCommand extends AbstractCommand
 								pageSize,
 							})
 					)
-					.then(() => this.updateEmbed(answer))
+					.then(listener => this.updateEmbed(answer, listener.getDbListener()))
 					.then((updatedEmbed: Discord.MessageEmbed) => answer.edit({ embeds: [updatedEmbed] }))
 					.catch(e => this.bot.logger.error(`${this.name}:${message.id}`, e));
 
@@ -80,7 +80,7 @@ class ActivitRankCommand extends AbstractCommand
 			.catch(console.error)
 	}
 
-	protected async updateEmbed(message: Discord.Message): Promise<Discord.MessageEmbed>
+	protected async updateEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined): Promise<Discord.MessageEmbed>
 	{
 		const embed = new Discord.MessageEmbed(message.embeds[0])
 		if (!message.guild)
@@ -91,7 +91,7 @@ class ActivitRankCommand extends AbstractCommand
 				.setFooter('')
 		}
 
-		const data = this.state.db.listeners.get(message.id)?.data
+		const data = dbReactionListener?.data
 		if (!data)
 		{
 			// No data
@@ -170,7 +170,7 @@ class ActivitRankCommand extends AbstractCommand
 
 	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
 	{
-		const data = this.state.db.listeners.get(listener.message.id)?.data
+		const data = listener.getDbListener()?.data
 
 		// Ignore reactions from other users & other emojis
 		return data !== undefined
@@ -185,8 +185,9 @@ class ActivitRankCommand extends AbstractCommand
 			.catch(e => this.bot.logger.error(e))
 
 		const message = listener.message
-		const data = this.state.db.listeners.get(message.id)?.data
-		const collector = (this.bot.listeners.get(message.id) as MessageReactionListener | undefined)?.collector
+		const dbListener = listener.getDbListener()
+		const data = dbListener?.data
+		const collector = listener.collector
 
 		if (data === undefined)
 		{
@@ -226,7 +227,7 @@ class ActivitRankCommand extends AbstractCommand
 		}
 
 		// Update the embed
-		this.updateEmbed(message).then(embed => message.edit({ embeds: [embed] }));
+		this.updateEmbed(message, dbListener).then(embed => message.edit({ embeds: [embed] }));
 	}
 
 	protected messageReactionHandlerOnEnd(listener: MessageReactionListener, collected: any, reason: string): void
@@ -236,14 +237,15 @@ class ActivitRankCommand extends AbstractCommand
 		if (reason === 'freeze') {
 			message.edit(`Voici les meilleurs du classement !`)
 
-			const data = this.state.db.listeners.get(message.id)?.data
+			const dbListener = listener.getDbListener()
+			const data = dbListener?.data
 			if (data !== undefined)
 			{
 				data.currentPage = 1
 			}
 
 			message.reactions.removeAll()
-			this.updateEmbed(message).then(embed => message.edit({ embeds: [embed] }))
+			this.updateEmbed(message, dbListener).then(embed => message.edit({ embeds: [embed] }))
 			return
 		}
 
