@@ -1,48 +1,43 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { AudioPlayerStatus, createAudioPlayer, createAudioResource, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice'
-import { AbstractCommand, Bot, Discord } from 'discord-mel'
+import { Mel, Discord } from 'discord-mel'
 import YTDL from 'ytdl-core'
 
 import State from '../state/State'
+import AbstractCommand from './AbstractCommand'
 
 class PlayCommand extends AbstractCommand
 {
+	public static readonly enabled: boolean = true
+
 	protected voiceChannel?: Discord.VoiceChannel | Discord.StageChannel
 	protected connection?: VoiceConnection
 
-	constructor(bot: Bot)
+	constructor(id: string, bot: Mel)
 	{
-		super(bot, 'play')
+		super(id, bot)
 
-		this.description = 'Joue les musiques de la playlist'
-
-		// Legacy commands aliases
-		// this.commandAliases.add('rungiveaway')
-
-		// Application commands
-		this.applicationCommands.push(
-			(() => {
-				const slashCommand = new SlashCommandBuilder()
-				slashCommand.setName(this.name)
-				if (this.description)
-					slashCommand.setDescription(this.description)
-
-				slashCommand.addStringOption(slashCommand => slashCommand
-						.setName('url')
-						.setDescription('Lien de la musique à jouer')
-						.setRequired(true)
-					)
-
-				return slashCommand
-			})()
-		)
+		this.name = 'play'
+		this.description = 'Joue une musique et l\'ajoute à la playlist.'
 
 		this.guildOnly = true
-	}
 
-	protected get state(): State
-	{
-		return super.state as State
+		// Application commands
+		this.applicationCommands
+			.add((() =>
+				{
+					const slashCommand = (new SlashCommandBuilder())
+						.setName(this.name)
+						.setDescription(this.description)
+
+					slashCommand.addStringOption(option => option
+							.setName('url')
+							.setDescription('Lien de la musique à jouer.')
+							.setRequired(true)
+						)
+
+					return slashCommand
+				})())
 	}
 
 	protected getConnection(voiceChannel: Discord.VoiceChannel | Discord.StageChannel): VoiceConnection
@@ -104,8 +99,8 @@ class PlayCommand extends AbstractCommand
 					const player = createAudioPlayer()
 					player.on('error', (error) =>
 						{
-							this.logger.error("a")
-							this.logger.error(error, this.name)
+							this.bot.logger.error("a")
+							this.bot.logger.error(error, this.name)
 						})
 
 					const stream = YTDL(resourceUrl)
