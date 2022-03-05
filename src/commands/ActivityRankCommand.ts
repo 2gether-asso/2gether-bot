@@ -87,7 +87,7 @@ class ActivityRankCommand extends AbstractCommand
 			// No guild
 			return embed
 				.setDescription(`Aucun serveur sélectionné`)
-				.setFooter('')
+				.setFooter(null)
 		}
 
 		const data = dbReactionListener?.data
@@ -96,7 +96,7 @@ class ActivityRankCommand extends AbstractCommand
 			// No data
 			return embed
 				.setDescription('Aucune donnée de classement')
-				.setFooter('')
+				.setFooter(null)
 		}
 
 		const nbMembers = this.state.db.activities.ranking.length
@@ -105,7 +105,7 @@ class ActivityRankCommand extends AbstractCommand
 			// Empty ranking
 			return embed
 				.setDescription('Le classement est vide')
-				.setFooter('')
+				.setFooter(null)
 		}
 
 		data.maxPages = Math.ceil(nbMembers / data.pageSize)
@@ -114,7 +114,9 @@ class ActivityRankCommand extends AbstractCommand
 		const footerInfo = `Parmi ${nbMembers > 1 ? `les ${nbMembers} membres classés` : `le seul membre classé`} sur ${message.guild?.name ?? 'le serveur'}`
 
 		embed.setDescription('')
-			.setFooter(`${footerPage} ⋅ ${footerInfo}`)
+			.setFooter({
+					text: `${footerPage} ⋅ ${footerInfo}`,
+				})
 			.spliceFields(0, 25) // Remove all fields
 
 		let i = (data.currentPage - 1) * data.pageSize

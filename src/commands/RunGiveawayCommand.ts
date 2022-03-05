@@ -259,9 +259,12 @@ class RunGiveawayCommand extends AbstractCommand
 			embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
 			if (author)
 				embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${author} !`)
-			embed.setFooter(participants.size > 1
-					? `Merci aux ${participants.size} participants !`
-					: `Merci à l'unique participant !`)
+			embed.setFooter({
+					text: participants.size > 1
+						? `Merci aux ${participants.size} participants !`
+						: `Merci à l'unique participant !`
+						,
+				})
 
 			// Announce the giveaway winner!
 			channel.send({ content,
