@@ -1,7 +1,6 @@
 import { ApplicationCommandType } from 'discord-api-types'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
 import { Mel, Discord } from 'discord-mel'
-import Collection = Discord.Collection
 
 import AbstractCommand from './AbstractCommand'
 
@@ -234,7 +233,7 @@ class RunGiveawayCommand extends AbstractCommand
 			await reaction?.users.fetch()
 				.then(users => users.filter(user => !user.bot))
 				.catch(() => undefined)
-			|| new Collection<string, Discord.User>()
+			|| new Discord.Collection<string, Discord.User>()
 
 		this.bot.logger.debug(`Trying to draw ${options.nbWinners} winners`, `${this.name}:${repliedTo.id}`)
 		const winners = participants.random(options.nbWinners)

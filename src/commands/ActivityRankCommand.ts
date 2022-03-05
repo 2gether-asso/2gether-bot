@@ -1,5 +1,4 @@
-import { DBListener, Discord, ListenerTypes, Mel, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
-import MessageReactionHandler from 'discord-mel/dist/listeners/handler/MessageReactionHandler'
+import { DBListener, Discord, ListenerTypes, Mel, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
 
