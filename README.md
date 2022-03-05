@@ -1,5 +1,7 @@
 # 2GETHER bot
 
+![discord-mel dependency version](https://img.shields.io/github/package-json/dependency-version/2gether-asso/2gether-bot/discord-mel?logo=discord&logoColor=white&style=flat-square)
+
 <img src="https://discordapp.com/assets/e4923594e694a21542a489471ecffa50.svg" width="200" />
 
 Discord bot for the 2GETHER community
