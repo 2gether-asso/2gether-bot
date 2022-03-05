@@ -1,14 +1,14 @@
-import Mergeable from 'discord-mel/dist/functions/Mergeable'
+import IUnserialize from 'discord-mel/dist/functions/IUnserialize'
 
 import ActivityRankingRole from './ActivityRankingRole'
 
-class ActivityRankingRoles extends Array<ActivityRankingRole> implements Mergeable
+class ActivityRankingRoles extends Array<ActivityRankingRole> implements IUnserialize
 {
-	public mergeWith(object: any): this
+	public unserialize(other: any): this
 	{
-		for (const key in object)
+		for (const key in other)
 		{
-			const activityRankingRole = new ActivityRankingRole(object[key])
+			const activityRankingRole = new ActivityRankingRole(other[key])
 			this.push(activityRankingRole)
 		}
 
