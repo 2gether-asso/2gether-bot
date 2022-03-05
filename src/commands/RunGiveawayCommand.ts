@@ -215,11 +215,11 @@ class RunGiveawayCommand extends AbstractCommand
 	/**
 	 *
 	 * @param {Discord.Message} repliedTo
-	 * @param {Discord.TextBasedChannels} channel
+	 * @param {Discord.TextBasedChannel} channel
 	 * @param {Discord.User} author
 	 */
 	async execute(repliedTo: Discord.Message,
-	              channel: Discord.TextBasedChannels,
+	              channel: Discord.TextBasedChannel,
 	              author: Discord.User,
 				  reaction?: Discord.MessageReaction)
 	{
