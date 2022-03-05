@@ -3,7 +3,7 @@ import MessageReactionHandler from 'discord-mel/dist/listeners/handler/MessageRe
 
 import AbstractCommand from './AbstractCommand'
 
-class ActivitRankCommand extends AbstractCommand
+class ActivityRankCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
@@ -263,4 +263,4 @@ class ActivitRankCommand extends AbstractCommand
 	}
 }
 
-export default ActivitRankCommand
+export default ActivityRankCommand
