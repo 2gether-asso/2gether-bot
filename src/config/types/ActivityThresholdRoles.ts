@@ -1,14 +1,14 @@
-import Mergeable from 'discord-mel/dist/functions/Mergeable'
+import IUnserialize from 'discord-mel/dist/functions/IUnserialize'
 
 import ActivityThresholdRole from './ActivityThresholdRole'
 
-class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements Mergeable
+class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements IUnserialize
 {
-	public mergeWith(object: any): this
+	public unserialize(other: any): this
 	{
-		for (const key in object)
+		for (const key in other)
 		{
-			const activityThresholdRole = new ActivityThresholdRole(object[key])
+			const activityThresholdRole = new ActivityThresholdRole(other[key])
 			this.push(activityThresholdRole)
 		}
 

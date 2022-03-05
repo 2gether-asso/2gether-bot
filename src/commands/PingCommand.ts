@@ -3,17 +3,21 @@ import { AbstractCommand, Mel, Discord } from 'discord-mel'
 
 class PingCommand extends AbstractCommand
 {
-	constructor(bot: Mel)
-	{
-		super(bot, 'ping')
+	public static readonly enabled: boolean = true
 
-		this.description = this.translator.translate('ping.description')
+	constructor(id: string, bot: Mel)
+	{
+		super(id, bot)
+
+		this.name = 'ping'
+
+		this.description = this.bot.translator.translate('ping.description')
 
 		// Legacy commands aliases
 		// this.commandAliases.add('ping')
 
 		// Application commands
-		this.applicationCommands.push(
+		this.applicationCommands.add(
 			(() => {
 				const slashCommand = new SlashCommandBuilder()
 				slashCommand.setName(this.name)
@@ -27,12 +31,12 @@ class PingCommand extends AbstractCommand
 
 	async onMessage(message: Discord.Message): Promise<void>
 	{
-		message.reply(this.translator.translate('ping.pong'))
+		message.reply(this.bot.translator.translate('ping.pong'))
 	}
 
 	async onCommandInteraction(interaction: Discord.BaseCommandInteraction): Promise<void>
 	{
-		interaction.reply(this.translator.translate('ping.pong'))
+		interaction.reply(this.bot.translator.translate('ping.pong'))
 	}
 }
 

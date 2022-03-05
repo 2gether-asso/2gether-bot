@@ -1,7 +1,7 @@
 import { AbstractState } from 'discord-mel'
-import StateType from './StateType'
+import StateDB from './StateDB'
 
-class State extends AbstractState<StateType, StateType>
+class State extends AbstractState<StateDB>
 {
 	constructor(stateFile?: string, charset: BufferEncoding = 'utf8')
 	{
@@ -10,8 +10,7 @@ class State extends AbstractState<StateType, StateType>
 
 	protected initProperties(): void
 	{
-		this._db = new StateType()
-		this.js = new StateType()
+		this._db = new StateDB()
 	}
 }
 

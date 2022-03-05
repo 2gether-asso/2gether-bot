@@ -4,14 +4,17 @@ import AbstractCommand from './AbstractCommand'
 
 class ActivityCommand extends AbstractCommand
 {
-	constructor(bot: Mel)
-	{
-		super(bot, 'activity')
+	public static readonly enabled: boolean = true
 
-		this.description = this.translator.translate('activity.description')
+	constructor(id: string, bot: Mel)
+	{
+		super(id, bot)
+
+		this.name = 'activity'
+		this.description = this.bot.translator.translate('activity.description')
 
 		this.guildOnly = true
-		this.permissions = ['ADMINISTRATOR']
+		this.permissions.add('ADMINISTRATOR')
 
 		// Legacy commands aliases
 		this.commandAliases.add('activity')

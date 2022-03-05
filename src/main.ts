@@ -21,6 +21,7 @@ const bot = new Mel(
 				Mel.Intents.FLAGS.GUILDS,
 				Mel.Intents.FLAGS.GUILD_VOICE_STATES,
 				Mel.Intents.FLAGS.GUILD_MESSAGES,
+				Mel.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
 				Mel.Intents.FLAGS.DIRECT_MESSAGES,
 			],
 		partials:
