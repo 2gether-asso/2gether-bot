@@ -101,9 +101,9 @@ class PlayCommand extends AbstractCommand
 			)
 	}
 
-	protected getConnection(voiceChannel?: Discord.VoiceChannel | Discord.StageChannel | null): VoiceConnection | undefined
+	protected getConnection(voiceChannel: Discord.VoiceChannel | Discord.StageChannel | null | undefined): VoiceConnection | undefined
 	protected getConnection(voiceChannel: Discord.VoiceChannel | Discord.StageChannel): VoiceConnection
-	protected getConnection(voiceChannel?: Discord.VoiceChannel | Discord.StageChannel | null): VoiceConnection | undefined
+	protected getConnection(voiceChannel: Discord.VoiceChannel | Discord.StageChannel | null | undefined): VoiceConnection | undefined
 	{
 		if (!voiceChannel)
 		{
