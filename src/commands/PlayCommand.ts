@@ -406,14 +406,13 @@ class PlayCommand extends AbstractCommand
 			embed.setColor(data.color)
 
 			if (data.status) embed.addField('status', data.status, false)
+			embed.addField('Ajouter une musique', `\`/play url:<YouTube url>\``, false)
 			embed.addField('len(queue)', `${dbRadio.queue.length}`, true)
 			embed.addField('len(history)', `${dbRadio.history.length}`, true)
 			embed.addField('loopMode', `${dbRadio.loopMode}`, true)
 			embed.addField('volume', `${dbRadio.volume * 100} %`, true)
 			// embed.addField('queue', `:${dbRadio.queue.join(',')}`, false)
 			// embed.addField('lastPlayed', `${dbRadio.lastPlayed}`, false)
-
-			const playInstructions = `\n\nAjoutez une musique pour commencer à jouer :\n\`/play url:<YouTube url>\``
 
 			// const player = this.players.get(listener.id)
 			const player = this.player
@@ -452,12 +451,12 @@ class PlayCommand extends AbstractCommand
 						return `\n${this.secondsToStr(playbackSeconds)} ▬🔵▬▬▬▬▬▬▬▬▬▬ ▬ ▬ ▬`
 					})()
 
-				embed.setDescription(`${trackTitle}${progressLine}${playInstructions}`)
+				embed.setDescription(`${trackTitle}${progressLine}`)
 			}
 			else {
 				const trackTitle = `⏹ _Rien ne joue_`
 
-				embed.setDescription(`${trackTitle}${playInstructions}`);
+				embed.setDescription(`${trackTitle}`)
 			}
 		}
 
