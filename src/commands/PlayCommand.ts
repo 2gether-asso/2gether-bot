@@ -3,6 +3,7 @@ import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource,
 import { Mel, Discord, MessageReactionListenerRegister, DBListener, ListenerTypes, MessageReactionHandler, MessageReactionListener } from 'discord-mel'
 import YTDL from 'ytdl-core'
 import Radio from '../state/types/Radio'
+import RadioLoopMode from '../state/types/RadioLoopMode'
 
 import AbstractCommand from './AbstractCommand'
 
@@ -716,10 +717,28 @@ class PlayCommand extends AbstractCommand
 		else if (reactionEmoji === RadioControlEmojis.LOOP_TOGGLE)
 		{
 			// this.toggleLoop()
+
+			if (dbRadio.loopMode === RadioLoopMode.NONE)
+			{
+				dbRadio.loopMode = RadioLoopMode.QUEUE
+			}
+			else if (dbRadio.loopMode === RadioLoopMode.QUEUE)
+			{
+				dbRadio.loopMode = RadioLoopMode.SINGLE
+			}
+			else
+			{
+				dbRadio.loopMode = RadioLoopMode.NONE
+			}
 		}
 		else if (reactionEmoji === RadioControlEmojis.CLEAR)
 		{
 			// this.clearPlaylist()
+
+			// Clear the queue and history, leaving only the last played track
+			dbRadio.queue = []
+			dbRadio.history = dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
+			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
 		}
 		else if (reactionEmoji === RadioControlEmojis.STOP)
 		{
