@@ -475,6 +475,23 @@ class PlayCommand extends AbstractCommand
 		return this.updateMessageEmbed(listener, dbReactionListener, dbRadio)
 	}
 
+	protected secondsToStr(seconds: number)
+	{
+		// Compute units
+		let minutes = seconds / 60
+		let hours = minutes / 60
+
+		// Reduce units
+		seconds = Math.floor(seconds % 60)
+		minutes = Math.floor(minutes % 60)
+		hours = Math.floor(hours)
+
+		// Return result
+		if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+		else if (minutes > 0) return `${minutes}m ${seconds}s`;
+		else return `${seconds}s`;
+	}
+
 	protected async playNext(_connection: VoiceConnection | undefined, listener: MessageReactionListener, _dbRadio?: Radio): Promise<void>
 	{
 		const guild = listener.message.guild
@@ -620,21 +637,36 @@ class PlayCommand extends AbstractCommand
 		this.state.save()
 	}
 
-	protected secondsToStr(seconds: number)
+	// protected async setVolume(listener: MessageReactionListener, dbRadio: Radio, volume: number): Promise<void>
+	protected async setVolume(dbRadio: Radio, volume: number): Promise<void>
 	{
-		// Compute units
-		let minutes = seconds / 60
-		let hours = minutes / 60
+		if (!this.playerSubscription)
+		{
+			this.bot.logger.warn('setVolume: No player', 'PlayCommand')
+			throw new Error('No player')
+		}
 
-		// Reduce units
-		seconds = Math.floor(seconds % 60)
-		minutes = Math.floor(minutes % 60)
-		hours = Math.floor(hours)
+		if (volume <= Number.EPSILON)
+		{
+			volume = 0
+		}
+		else if (volume >= 1 - Number.EPSILON)
+		{
+			volume = 1
+		}
 
-		// Return result
-		if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-		else if (minutes > 0) return `${minutes}m ${seconds}s`;
-		else return `${seconds}s`;
+		const state = this.playerSubscription.player.state
+		if (state.status === AudioPlayerStatus.Playing || state.status === AudioPlayerStatus.Paused)
+		{
+			if (state.resource.volume)
+			{
+				state.resource.volume.setVolumeLogarithmic(volume)
+				dbRadio.volume = volume
+				return
+			}
+		}
+
+		throw new Error('Cannot change volume')
 	}
 
 	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
@@ -699,15 +731,18 @@ class PlayCommand extends AbstractCommand
 		}
 		else if (reactionEmoji === RadioControlEmojis.MUTE)
 		{
-			// this.setVolume(0)
+			this.setVolume(dbRadio, 0)
+				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
 		}
 		else if (reactionEmoji === RadioControlEmojis.VOLUME_DOWN)
 		{
-			// this.setVolume(dbRadio.volume - .1)
+			this.setVolume(dbRadio, dbRadio.volume - .1)
+				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
 		}
 		else if (reactionEmoji === RadioControlEmojis.VOLUME_UP)
 		{
-			// this.setVolume(dbRadio.volume + .1)
+			this.setVolume(dbRadio, dbRadio.volume + .1)
+				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
 		}
 	}
 }
