@@ -724,10 +724,8 @@ class PlayCommand extends AbstractCommand
 		else if (reactionEmoji === RadioControlEmojis.STOP)
 		{
 			// this.stop()
-			if (this.player)
-			{
-				this.stopPlayer()
-			}
+			this.stopPlayer()
+			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
 		}
 		else if (reactionEmoji === RadioControlEmojis.MUTE)
 		{
