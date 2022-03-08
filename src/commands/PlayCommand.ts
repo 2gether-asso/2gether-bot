@@ -690,6 +690,10 @@ class PlayCommand extends AbstractCommand
 		const dbRadio = this.state.db.guilds.getGuild(listener.message.guild).radio
 
 		const reactionEmoji = reaction.emoji.name
+
+		reaction.users.remove(user)
+			.catch(() => this.bot.logger.warn('Failed to remove reaction', 'PlayCommand'))
+
 		if (reactionEmoji === RadioControlEmojis.PLAY_TOGGLE)
 		{
 			// this.togglePlay()
