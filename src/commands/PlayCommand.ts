@@ -54,6 +54,8 @@ class PlayCommand extends AbstractCommand
 
 	protected playerSubscription?: PlayerSubscription
 
+	protected playerEmbedUpdater?: NodeJS.Timer
+
 	// protected isPlaying: boolean = false
 
 	public constructor(id: string, bot: Mel)
@@ -564,14 +566,27 @@ class PlayCommand extends AbstractCommand
 			// else
 			// 	message.channel.send(`Morceau suivant ! 🎵`, await getStatusEmbed());
 
-			// Update the status embed
-			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
+			const playerEmbedUpdate = () =>
+				{
+					if (this.player && this.player.state.status === AudioPlayerStatus.Playing)
+					{
+						this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
+							.then(() =>
+								{
+									// Try to update the player embed again later
+									setTimeout(playerEmbedUpdate, 1000)
+								})
+					}
+				}
+
+			// Update the player embed
+			playerEmbedUpdate()
 		});
 
 		player.on(AudioPlayerStatus.Buffering, (oldState, newState) => {
 			this.bot.logger.debug('Audio player is in the Buffering state!', 'PlayCommand') //, oldState, newState)
 
-			// Update the status embed
+			// Update the player embed
 			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
 		});
 
