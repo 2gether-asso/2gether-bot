@@ -1,13 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, getVoiceConnection, joinVoiceChannel, NoSubscriberBehavior, PlayerSubscription, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice'
-import { Mel, Discord, MessageReactionListenerRegister, DBListener, ListenerTypes, MessageReactionHandler, MessageReactionListener } from 'discord-mel'
+import { Mel, Discord, MessageReactionListenerRegister, DBListener, ListenerTypes, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageComponentHandler, MessageComponentListener } from 'discord-mel'
 import YTDL from 'ytdl-core'
 import Radio from '../state/types/Radio'
 import RadioLoopMode from '../state/types/RadioLoopMode'
 
 import AbstractCommand from './AbstractCommand'
 
-class MessageReactionListenerData
+class MessageComponentListenerData
 {
 	public authorId: Discord.Snowflake
 
@@ -22,7 +22,7 @@ class MessageReactionListenerData
 
 	public color: Discord.ColorResolvable
 
-	public constructor(authorId: Discord.Snowflake, title: string, color: Discord.ColorResolvable = '#0099ff')
+	public constructor(authorId: Discord.Snowflake, title: string = '2GETHER Radio 📻', color: Discord.ColorResolvable = '#0099ff')
 	{
 		this.authorId = authorId
 		this.title = title
@@ -33,7 +33,8 @@ class MessageReactionListenerData
 enum RadioControlEmojis
 {
 	PREVIOUS = '⏮',
-	PLAY_TOGGLE = '⏯',
+	PLAY = '▶️', // '⏯',
+	PAUSE = '⏸️',
 	NEXT = '⏭',
 	LOOP_TOGGLE = '🔁',
 	CLEAR = '⏏️',
@@ -43,9 +44,22 @@ enum RadioControlEmojis
 	VOLUME_UP = '🔊',
 }
 
+type RadioControlComponentId = `${string}:${keyof typeof RadioControlEmojis}`
+
 class PlayCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
+
+	protected readonly COMPONENT_PREVIOUS: RadioControlComponentId = `${this.id}:PREVIOUS`
+	protected readonly COMPONENT_PLAY: RadioControlComponentId = `${this.id}:PLAY`
+	protected readonly COMPONENT_PAUSE: RadioControlComponentId = `${this.id}:PAUSE`
+	protected readonly COMPONENT_NEXT: RadioControlComponentId = `${this.id}:NEXT`
+	protected readonly COMPONENT_LOOP_TOGGLE: RadioControlComponentId = `${this.id}:LOOP_TOGGLE`
+	protected readonly COMPONENT_CLEAR: RadioControlComponentId = `${this.id}:CLEAR`
+	protected readonly COMPONENT_STOP: RadioControlComponentId = `${this.id}:STOP`
+	protected readonly COMPONENT_MUTE: RadioControlComponentId = `${this.id}:MUTE`
+	protected readonly COMPONENT_VOLUME_DOWN: RadioControlComponentId = `${this.id}:VOLUME_DOWN`
+	protected readonly COMPONENT_VOLUME_UP: RadioControlComponentId = `${this.id}:VOLUME_UP`
 
 	protected voiceChannel?: Discord.VoiceChannel | Discord.StageChannel
 
@@ -85,16 +99,28 @@ class PlayCommand extends AbstractCommand
 					return slashCommand
 				})())
 
+		// // RadioControlEmojis Components
+		// this.controlComponentsIds = []
+		// for (const control of Object.keys(RadioControlEmojis))
+		// {
+		// 	this.controlComponentsIds.push(`${this.id}:${control}`)
+		// }
+
+		// // Components
+		// this.componentIds
+		// 	.add(this.COMPONENT_FINISH)
+		// 	.add(this.COMPONENT_SELECT_ROLE)
+
 		this.handlers
-			.set(ListenerTypes.MESSAGE_REACTION,
-				(new MessageReactionHandler())
-					.setFilter(this.messageReactionHandlerFilter.bind(this))
+			.set(ListenerTypes.MESSAGE_COMPONENT,
+				(new MessageComponentHandler())
+					.setFilter(this.messageComponentHandlerFilter.bind(this))
 					.configureOptions(options => options
 						.setStore(false)
 						.setDispose(true)
 					)
 					.configureOn(on => on
-						.setCollect(this.messageReactionHandlerOnCollect.bind(this))
+						.setCollect(this.messageComponentHandlerOnCollect.bind(this))
 						// .setRemove(this.messageReactionHandlerOnRemove.bind(this))
 						// .setEnd(this.messageReactionHandlerOnEnd.bind(this))
 					)
@@ -185,7 +211,7 @@ class PlayCommand extends AbstractCommand
 		// return this.connection
 	}
 
-	protected getPlayer(listener: MessageReactionListener): AudioPlayer
+	protected getPlayer(listener: MessageComponentListener): AudioPlayer
 	{
 		// const player = this.players.get(listener.id)
 		// if (player)
@@ -345,36 +371,65 @@ class PlayCommand extends AbstractCommand
 				content: 'Chargement...',
 			})
 			.then(message =>
-				// Add the reaction listener
+				// // Add the reaction listener
+				// this.bot.listeners.addFor(message,
+				// 	(new MessageReactionListenerRegister())
+				// 		.setCommandId(this.id)
+				// 		.setIdleTimeout(120000) // 2 minutes
+				// 		.setData(new MessageReactionListenerData(interaction.user.id, '2GETHER Radio 📻'))
+				// 	)
+				// Add the component listener
 				this.bot.listeners.addFor(message,
-						(new MessageReactionListenerRegister())
-							.setCommandId(this.id)
-							.setIdleTimeout(120000) // 2 minutes
-							.setData(new MessageReactionListenerData(interaction.user.id, '2GETHER Radio 📻'))
+					(new MessageComponentListenerRegister())
+						.setCommandId(this.id)
+						.setIdleTimeout(120000) // 2 minutes
+						.setData(new MessageComponentListenerData(interaction.user.id))
 					)
 					.then(listener =>
 						{
-							const reactionListener = listener as MessageReactionListener
+							const componentListener = listener as MessageComponentListener
 
 							// Save the reaction listener id
-							dbRadio.listenerId = reactionListener.id
+							dbRadio.listenerId = componentListener.id
 
 							// Inform the user that the message listener has been created
-							return this.updateMessageEmbed(reactionListener, listener.getDbListener(), dbRadio)
-								.then(updatedMessage => updatedMessage.edit({ content: null }))
+							return this.updateMessageEmbed(componentListener, listener.getDbListener(), dbRadio)
+								// .then(updatedMessage => updatedMessage.edit({ content: null }))
+								.then(updatedMessage => updatedMessage.edit(
+									{
+										content: null,
+										components: [
+											new Discord.MessageActionRow()
+												.addComponents(
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_PREVIOUS)
+														.setLabel(RadioControlEmojis.PREVIOUS)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_PLAY)
+														.setLabel(RadioControlEmojis.PLAY)
+														.setStyle('SUCCESS'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_PAUSE)
+														.setLabel(RadioControlEmojis.PAUSE)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_NEXT)
+														.setLabel(RadioControlEmojis.NEXT)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_LOOP_TOGGLE)
+														.setLabel(RadioControlEmojis.LOOP_TOGGLE)
+														.setStyle('SUCCESS'),
+												),
+										]
+									}))
 								.then(updatedMessage =>
 									{
 										const connection = this.getConnection(voiceChannel)
 
 										// Play the next track, if any
-										return this.playNext(connection, reactionListener, dbRadio)
-											.then(async () =>
-												{
-													for (const emoji of Object.values(RadioControlEmojis))
-													{
-														await updatedMessage.react(emoji)
-													}
-												})
+										return this.playNext(connection, componentListener, dbRadio)
 									})
 						})
 				)
@@ -386,14 +441,14 @@ class PlayCommand extends AbstractCommand
 				})
 	}
 
-	// protected async updateMessageEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
-	protected async updateMessageEmbed(listener: MessageReactionListener, dbReactionListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
+	// protected async updateMessageEmbed(message: Discord.Message, dbComponentListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
+	protected async updateMessageEmbed(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
 	{
 		// const embed = new Discord.MessageEmbed(message.embeds[0])
 		const embed = new Discord.MessageEmbed()
 		embed.spliceFields(0, 25) // Reset fields
 
-		if (!dbReactionListener)
+		if (!dbComponentListener)
 		{
 			embed.setTitle('Invalide')
 			embed.setDescription('Le système de rôle est en échec.')
@@ -401,7 +456,7 @@ class PlayCommand extends AbstractCommand
 		}
 		else
 		{
-			const data = dbReactionListener.data as MessageReactionListenerData
+			const data = dbComponentListener.data as MessageComponentListenerData
 			embed.setTitle(data.title)
 			embed.setColor(data.color)
 
@@ -463,16 +518,16 @@ class PlayCommand extends AbstractCommand
 		return listener.message.edit({ embeds: [ embed ] })
 	}
 
-	// protected updateMessageEmbedStatus(message: Discord.Message, dbReactionListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
-	protected async updateMessageEmbedStatus(listener: MessageReactionListener, dbReactionListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
+	// protected updateMessageEmbedStatus(message: Discord.Message, dbComponentListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
+	protected async updateMessageEmbedStatus(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
 	{
-		if (dbReactionListener)
+		if (dbComponentListener)
 		{
-			(dbReactionListener.data as MessageReactionListenerData).status = status
+			(dbComponentListener.data as MessageComponentListenerData).status = status
 			this.state.save()
 		}
 
-		return this.updateMessageEmbed(listener, dbReactionListener, dbRadio)
+		return this.updateMessageEmbed(listener, dbComponentListener, dbRadio)
 	}
 
 	protected secondsToStr(seconds: number)
@@ -492,7 +547,7 @@ class PlayCommand extends AbstractCommand
 		else return `${seconds}s`;
 	}
 
-	protected async playNext(_connection: VoiceConnection | undefined, listener: MessageReactionListener, _dbRadio?: Radio): Promise<void>
+	protected async playNext(_connection: VoiceConnection | undefined, listener: MessageComponentListener, _dbRadio?: Radio): Promise<void>
 	{
 		const guild = listener.message.guild
 		if (!guild)
@@ -637,7 +692,7 @@ class PlayCommand extends AbstractCommand
 		this.state.save()
 	}
 
-	// protected async setVolume(listener: MessageReactionListener, dbRadio: Radio, volume: number): Promise<void>
+	// protected async setVolume(listener: MessageComponentListener, dbRadio: Radio, volume: number): Promise<void>
 	protected async setVolume(dbRadio: Radio, volume: number): Promise<void>
 	{
 		if (!this.playerSubscription)
@@ -669,16 +724,16 @@ class PlayCommand extends AbstractCommand
 		throw new Error('Cannot change volume')
 	}
 
-	protected messageReactionHandlerFilter(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): boolean
+	protected messageComponentHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
 	{
 		const dbListener = listener.getDbListener()
 
 		return dbListener !== undefined
 			// && listener.message.guild !== null
-			&& user.bot === false // Ignore bot reactions
+			// && user.bot === false // Ignore bot reactions
 	}
 
-	protected async messageReactionHandlerOnCollect(listener: MessageReactionListener, reaction: Discord.MessageReaction, user: Discord.User): Promise<void>
+	protected async messageComponentHandlerOnCollect(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): Promise<void>
 	{
 		const dbListener = listener.getDbListener()
 		if (!dbListener || !listener.message.guild)
@@ -686,84 +741,84 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		// const data = dbListener.data as MessageReactionListenerData
+		interaction.deferUpdate()
+
+		// const data = dbListener.data as MessageComponentListenerData
 		const dbRadio = this.state.db.guilds.getGuild(listener.message.guild).radio
 
-		const reactionEmoji = reaction.emoji.name
+		// const reactionEmoji = reaction.emoji.name
 
-		reaction.users.remove(user)
-			.catch(() => this.bot.logger.warn('Failed to remove reaction', 'PlayCommand'))
+		// reaction.users.remove(user)
+		// 	.catch(() => this.bot.logger.warn('Failed to remove reaction', 'PlayCommand'))
 
-		if (reactionEmoji === RadioControlEmojis.PLAY_TOGGLE)
-		{
-			// this.togglePlay()
-			if (this.player)
-			{
-				if (this.player.state.status === AudioPlayerStatus.Playing)
+		const componentsHandlers = new Map<string, () => Promise<void>>()
+			.set(this.COMPONENT_PLAY, async () =>
 				{
-					this.player.pause()
-				}
-				else
+					if (this.player)
+					{
+						this.player.unpause()
+					}
+				})
+			.set(this.COMPONENT_PAUSE, async () =>
 				{
-					this.player.unpause()
-				}
-			}
-		}
-		else if (reactionEmoji === RadioControlEmojis.PREVIOUS)
-		{
-			// this.playPrevious()
-		}
-		else if (reactionEmoji === RadioControlEmojis.NEXT)
-		{
-			this.playNext(undefined, listener, dbRadio)
-		}
-		else if (reactionEmoji === RadioControlEmojis.LOOP_TOGGLE)
-		{
-			// this.toggleLoop()
+					if (this.player)
+					{
+						this.player.pause()
+					}
+				})
+			.set(this.COMPONENT_PREVIOUS, async () =>
+				{
+					// this.playPrevious(undefined, listener, dbRadio)
+				})
+			.set(this.COMPONENT_NEXT, async () =>
+				{
+					this.playNext(undefined, listener, dbRadio)
+				})
+			.set(this.COMPONENT_LOOP_TOGGLE, async () =>
+				{
+					if (dbRadio.loopMode === RadioLoopMode.NONE)
+					{
+						dbRadio.loopMode = RadioLoopMode.QUEUE
+					}
+					else if (dbRadio.loopMode === RadioLoopMode.QUEUE)
+					{
+						dbRadio.loopMode = RadioLoopMode.SINGLE
+					}
+					else
+					{
+						dbRadio.loopMode = RadioLoopMode.NONE
+					}
+				})
+			.set(this.COMPONENT_STOP, async () =>
+				{
+					this.stopPlayer()
+				})
+			.set(this.COMPONENT_CLEAR, async () =>
+				{
+					// Clear the queue and history, leaving only the last played track
+					dbRadio.queue = []
+					dbRadio.history = dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
+					this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
+				})
+			.set(this.COMPONENT_MUTE, async () =>
+				{
+					return this.setVolume(dbRadio, 0)
+				})
+			.set(this.COMPONENT_VOLUME_DOWN, async () =>
+				{
+					return this.setVolume(dbRadio, dbRadio.volume - .1)
+				})
+			.set(this.COMPONENT_VOLUME_UP, async () =>
+				{
+					return this.setVolume(dbRadio, dbRadio.volume + .1)
+				})
 
-			if (dbRadio.loopMode === RadioLoopMode.NONE)
-			{
-				dbRadio.loopMode = RadioLoopMode.QUEUE
-			}
-			else if (dbRadio.loopMode === RadioLoopMode.QUEUE)
-			{
-				dbRadio.loopMode = RadioLoopMode.SINGLE
-			}
-			else
-			{
-				dbRadio.loopMode = RadioLoopMode.NONE
-			}
-		}
-		else if (reactionEmoji === RadioControlEmojis.CLEAR)
-		{
-			// this.clearPlaylist()
-
-			// Clear the queue and history, leaving only the last played track
-			dbRadio.queue = []
-			dbRadio.history = dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
-			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
-		}
-		else if (reactionEmoji === RadioControlEmojis.STOP)
-		{
-			// this.stop()
-			this.stopPlayer()
-			this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
-		}
-		else if (reactionEmoji === RadioControlEmojis.MUTE)
-		{
-			this.setVolume(dbRadio, 0)
-				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
-		}
-		else if (reactionEmoji === RadioControlEmojis.VOLUME_DOWN)
-		{
-			this.setVolume(dbRadio, dbRadio.volume - .1)
-				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
-		}
-		else if (reactionEmoji === RadioControlEmojis.VOLUME_UP)
-		{
-			this.setVolume(dbRadio, dbRadio.volume + .1)
-				.then(() => this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio))
-		}
+		componentsHandlers.get(interaction.customId)?.()
+			.then(() =>
+				{
+					this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
+						// .then(() => interaction.update({}))
+				})
 	}
 }
 
