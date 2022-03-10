@@ -478,7 +478,7 @@ class PlayCommand extends AbstractCommand
 					: '⏸' // Pause icon
 
 				// if (!currentTrackInfo && Storage.db.playlist.lastPlayed)
-				const currentTrackInfo = dbRadio.history.length > 0 ? await YTDL.getInfo(dbRadio.history[0]) : undefined
+				const currentTrackInfo = dbRadio.history.length > 0 ? await YTDL.getInfo(dbRadio.history[dbRadio.history.length - 1]) : undefined
 
 				const trackTitle = currentTrackInfo
 					? `${status} \`${currentTrackInfo.videoDetails.title}\``
@@ -596,7 +596,7 @@ class PlayCommand extends AbstractCommand
 
 		const stream = YTDL(nextTrack,
 			{
-				// quality: 'highestaudio',
+				quality: 'highestaudio',
 				highWaterMark: 1 << 25,
 			})
 
