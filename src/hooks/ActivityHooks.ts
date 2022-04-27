@@ -67,7 +67,7 @@ class ActivityHooks
 			this.state.setState(db =>
 				{
 					// Save timestamp of speaking
-					db.activities.users[member.id].voiceSince = Date.now()
+					db.activities.getUser(member.id).voiceSince = Date.now()
 				})
 
 			return
