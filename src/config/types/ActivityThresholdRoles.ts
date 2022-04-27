@@ -1,4 +1,4 @@
-import IUnserialize from 'discord-mel/dist/functions/IUnserialize'
+import { IUnserialize } from 'discord-mel'
 
 import ActivityThresholdRole from './ActivityThresholdRole'
 

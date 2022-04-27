@@ -1,4 +1,4 @@
-import IUnserialize from 'discord-mel/dist/functions/IUnserialize'
+import { IUnserialize } from 'discord-mel'
 
 import ActivityRankingRole from './ActivityRankingRole'
 
