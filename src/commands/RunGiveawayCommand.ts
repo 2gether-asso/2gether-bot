@@ -115,7 +115,7 @@ class RunGiveawayCommand extends AbstractCommand
 								.then(() =>
 									{
 										interaction.reply({
-												content: 'Done!',
+												content: `Done! Selected reaction: ${reaction?.emoji.name}`,
 												ephemeral: true,
 											})
 									})
@@ -178,7 +178,7 @@ class RunGiveawayCommand extends AbstractCommand
 								.then(() =>
 									{
 										interaction.update({
-												content: 'Done!',
+											content: `Done! Selected reaction: ${reaction?.emoji.name}`,
 												components: [],
 											})
 									})
