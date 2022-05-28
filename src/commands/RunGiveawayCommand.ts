@@ -4,17 +4,23 @@ import { Mel, Discord } from 'discord-mel'
 
 import AbstractCommand from './AbstractCommand'
 
+type ComponentId = `${string}:${string}`
+
 class RunGiveawayCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
+
+	protected readonly COMPONENT_SELECT_EMOJI: ComponentId = `${this.id}:SELECT_EMOJI`
 
 	constructor(id: string, bot: Mel)
 	{
 		super(id, bot)
 
 		this.name = 'rungiveaway'
-
 		this.description = 'Execute le tirage au sort.'
+
+		this.guildOnly = true
+		this.permissions.add('ADMINISTRATOR')
 
 		// Legacy commands aliases
 		// this.commandAliases.add('rungiveaway')
@@ -25,10 +31,7 @@ class RunGiveawayCommand extends AbstractCommand
 				.setName(this.name)
 				.setType(ApplicationCommandType.Message))
 
-		this.componentIds.add(`${this.name}:select_emoji`)
-
-		this.guildOnly = true
-		this.permissions.add('ADMINISTRATOR')
+		this.componentIds.add(this.COMPONENT_SELECT_EMOJI)
 	}
 
 	/**
@@ -90,7 +93,7 @@ class RunGiveawayCommand extends AbstractCommand
 										new Discord.MessageActionRow()
 											.addComponents(
 												new Discord.MessageSelectMenu()
-													.setCustomId(`${this.name}:select_emoji`)
+													.setCustomId(this.COMPONENT_SELECT_EMOJI)
 													.setPlaceholder('Nothing selected')
 													.addOptions(
 														repliedTo.reactions.cache.map((reaction, key) =>
@@ -103,7 +106,8 @@ class RunGiveawayCommand extends AbstractCommand
 									],
 									ephemeral: true,
 								})
-							this.bot.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)						}
+							this.bot.logger.debug('Prompt for which reaction', `${this.name}:${repliedToId}`)
+						}
 						else
 						{
 							const reaction = repliedTo.reactions.cache.first()
@@ -145,64 +149,71 @@ class RunGiveawayCommand extends AbstractCommand
 
 	async onComponentInteraction(interaction: Discord.MessageComponentInteraction)
 	{
-		if (!interaction.isSelectMenu())
-			return
-
-		if (interaction.customId === `${this.name}:select_emoji`)
+		if (interaction.customId === this.COMPONENT_SELECT_EMOJI)
 		{
-			if (interaction.values.length === 1)
+			return this.componentSelectEmojiHandler(interaction)
+		}
+	}
+
+	async componentSelectEmojiHandler(interaction: Discord.MessageComponentInteraction)
+	{
+		if (!interaction.isSelectMenu())
+		{
+			return
+		}
+
+		if (interaction.values.length === 1)
+		{
+			const channel = interaction.channel
+			const [ repliedToId, emojiId ] = interaction.values[0].split(':')
+			if (channel && repliedToId)
 			{
-				const channel = interaction.channel
-				const [ repliedToId, emojiId ] = interaction.values[0].split(':')
-				if (channel && repliedToId)
-				{
-					await channel.messages.fetch(repliedToId)
-						.then(repliedTo => repliedTo.fetch())
-						.then(repliedTo =>
-							{
-								const reaction = repliedTo.reactions.resolve(emojiId) || undefined
-								this.bot.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
-								this.execute(repliedTo, channel, interaction.user, reaction)
-									.then(() =>
-										{
-											interaction.update({
-													content: 'Done!',
-													components: [],
-												})
-										})
-									.catch(error =>
-										{
-											interaction.reply({
-													content: 'Failed to execute the command.',
-													ephemeral: true,
-												})
-											this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
-										})
-							})
-						.catch(error =>
-							{
-								interaction.reply({
-										content: 'Failed to fetch the giveaway message.',
-										ephemeral: true,
+				await channel.messages.fetch(repliedToId)
+					.then(repliedTo => repliedTo.fetch())
+					.then(repliedTo =>
+						{
+							const reaction = repliedTo.reactions.resolve(emojiId) || undefined
+							this.bot.logger.debug(`Selected reaction ${reaction?.emoji.name}`, `${this.name}:${repliedToId}`)
+							this.execute(repliedTo, channel, interaction.user, reaction)
+								.then(() =>
+									{
+										interaction.update({
+												content: 'Done!',
+												components: [],
+											})
 									})
-								this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
-							})
-				}
-				else
-				{
-					interaction.reply({
-							content: 'Please reply to the giveaway message when executing this command.',
-							ephemeral: true,
+								.catch(error =>
+									{
+										interaction.reply({
+												content: 'Failed to execute the command.',
+												ephemeral: true,
+											})
+										this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
+									})
 						})
-				}
+					.catch(error =>
+						{
+							interaction.reply({
+									content: 'Failed to fetch the giveaway message.',
+									ephemeral: true,
+								})
+							this.bot.logger.warn(error, `${this.name}:${repliedToId}`)
+						})
 			}
 			else
 			{
 				interaction.reply({
-						content: `You must select only one value`,
+						content: 'Please reply to the giveaway message when executing this command.',
 						ephemeral: true,
 					})
 			}
+		}
+		else
+		{
+			interaction.reply({
+					content: `You must select only one value`,
+					ephemeral: true,
+				})
 		}
 	}
 
