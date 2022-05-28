@@ -21,14 +21,9 @@ class RunGiveawayCommand extends AbstractCommand
 
 		// Application commands
 		this.applicationCommands.add(
-			(() => {
-				const applicationCommand = new ContextMenuCommandBuilder()
-				applicationCommand.setName(this.name)
-				applicationCommand.setType(ApplicationCommandType.Message)
-
-				return applicationCommand
-			})()
-		)
+			new ContextMenuCommandBuilder()
+				.setName(this.name)
+				.setType(ApplicationCommandType.Message))
 
 		this.componentIds.add(`${this.name}:select_emoji`)
 
