@@ -284,16 +284,16 @@ class RunGiveawayCommand extends AbstractCommand
 							participants.forEach(participant =>
 								{
 									// Save participations
-									const participations = (db.giveaways.participations[participant.id] || 0) + 1
-									db.giveaways.participations[participant.id] = participations
+									const participations = (db.giveawayStats.participations[participant.id] || 0) + 1
+									db.giveawayStats.participations[participant.id] = participations
 									this.bot.logger.debug(`${participant.username} now has ${participations} participations`, `${this.name}:${repliedTo.id}`)
 								})
 
 							winners.forEach(winner =>
 								{
 									// Save wins
-									const wins = (db.giveaways.wins[winner.id] || 0) + 1
-									db.giveaways.wins[winner.id] = wins
+									const wins = (db.giveawayStats.wins[winner.id] || 0) + 1
+									db.giveawayStats.wins[winner.id] = wins
 									this.bot.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
 								})
 						})

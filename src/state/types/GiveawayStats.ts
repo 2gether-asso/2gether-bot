@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types'
 
-class Giveaways
+class GiveawayStats
 {
     public wins:
         {
@@ -15,4 +15,4 @@ class Giveaways
         {}
 }
 
-export default Giveaways
+export default GiveawayStats
