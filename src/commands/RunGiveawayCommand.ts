@@ -6,17 +6,6 @@ import AbstractCommand from './AbstractCommand'
 import Giveaway from '../entities/Giveaway'
 import GiveawayRunResults from '../enums/GiveawayRunResults'
 
-class GiveawayData
-{
-	public title = 'Une chance sur deux !'
-
-	public description = 'Résultats du tirage au sort.'
-
-	public color = '#4080c0'
-
-	public nbWinners = 1
-}
-
 type ComponentId = `${string}:${string}`
 
 class RunGiveawayCommand extends AbstractCommand
