@@ -48,7 +48,9 @@ class Giveaway extends AbstractEntity
 					{
 						return giveawayMessage.reactions.resolve(this.giveawayData.reactionEmoji)
 					}
-					else if (!forceUseReactionEmoji && this.giveawayData.defaultFirstReaction)
+					else if (!forceUseReactionEmoji
+						&& (this.giveawayData.defaultFirstReaction
+							|| giveawayMessage.reactions.cache.size <= 1))
 					{
 						return giveawayMessage.reactions.cache.first() || null
 					}
