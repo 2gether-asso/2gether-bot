@@ -96,9 +96,12 @@ class Giveaway extends AbstractEntity
 		return this.getGiveawayReaction()
 			.then(giveawayReaction =>
 				{
+					this.giveawayData.reactionEmoji = giveawayReaction?.emoji.name || undefined
+					this.bot.state.save()
+
 					if (!giveawayReaction)
 					{
-						return GiveawayRunResults.NO_WINNERS
+						return GiveawayRunResults.CONFIRM_WINNERS
 					}
 
 					return this.getParticipants(giveawayReaction)
@@ -110,9 +113,7 @@ class Giveaway extends AbstractEntity
 								this.giveawayData.winners = winners.map(winner => winner.id)
 								this.bot.state.save()
 
-								return winners.length >= 1
-									? GiveawayRunResults.CONFIRM_WINNERS
-									: GiveawayRunResults.NO_WINNERS
+								return GiveawayRunResults.CONFIRM_WINNERS
 							})
 				})
 			.catch(() =>

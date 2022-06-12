@@ -204,6 +204,7 @@ class RunGiveawayCommand extends AbstractCommand
 
 			// Confirm the giveaway
 			this.announceWinner(giveaway, interaction)
+				.then(() => this.state.setState(db => db.giveaways.delete(giveaway.giveawayData.giveawayMessageId)))
 		}
 	}
 
@@ -313,10 +314,28 @@ class RunGiveawayCommand extends AbstractCommand
 					}
 					else if (result == GiveawayRunResults.CONFIRM_WINNERS)
 					{
+						let content = ''
+						if (giveaway.giveawayData.winners.length <= 0)
+						{
+							content += 'Aucun gagnant n\'a été tiré au sort.'
+						}
+						else
+						{
+							content += giveaway.giveawayData.winners.length > 1 ? 'Les gagnants ont été tirés au sort:' : 'Le gagnant a été tiré au sort:'
+							content += ` <@${giveaway.giveawayData.winners.join('>, <@')}>`
+						}
+
+						if (giveaway.giveawayData.reactionEmoji)
+						{
+							content += `\nRéaction liée au giveaway: ${giveaway.giveawayData.reactionEmoji}`
+						}
+						else
+						{
+							content += `\nAucune réaction liée au giveaway.`
+						}
+
 						const replyOptions: Discord.InteractionReplyOptions & { fetchReply: true } = {
-								content:
-									`${giveaway.giveawayData.winners.length > 1 ? 'Les gagnants ont été tirés' : 'Le gagnant a été tiré'} au sort: <@${giveaway.giveawayData.winners.join('>, <@')}>\n`
-									+ `Réaction liée au giveaway: ${giveaway.giveawayData.reactionEmoji}`,
+								content: content,
 								components: [
 									new Discord.MessageActionRow()
 										.addComponents(
@@ -352,31 +371,6 @@ class RunGiveawayCommand extends AbstractCommand
 
 						this.bot.logger.debug('Prompt to confirm winners', `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 					}
-					else if (result == GiveawayRunResults.NO_WINNERS)
-					{
-						interaction.reply({
-								content: `There was no participants on this giveaway.`,
-								ephemeral: true,
-							})
-
-						if (interaction.channel)
-						{
-							let content = `Le giveaway`
-							if (interaction.channel.lastMessageId !== giveaway.giveawayData.giveawayMessageId)
-							{
-								content += ` **${giveaway.giveawayData.title}**`
-							}
-							content += ` vient de se terminer, et il n'y a malheureusement eu aucun participant 😅`
-
-							// Announce the lack of a winnner
-							interaction.channel.send({ content,
-									reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
-								})
-								.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
-						}
-
-						this.state.setState(db => db.giveaways.delete(giveaway.giveawayData.giveawayMessageId))
-					}
 
 					return result
 				})
@@ -392,7 +386,7 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 	}
 
-	protected async announceWinner(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction)
+	protected async announceWinner(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction): Promise<void>
 	{
 		if (!interaction.channel)
 		{
@@ -401,7 +395,6 @@ class RunGiveawayCommand extends AbstractCommand
 
 		const giveawayData = giveaway.giveawayData
 		const winners = giveawayData.winners
-		const winnersStr = winners.map(winner => `<@${winner}>`).join(`\n`)
 
 		let content = `Le giveaway`
 		if (interaction.channel.lastMessageId !== giveaway.giveawayData.giveawayMessageId)
@@ -409,58 +402,76 @@ class RunGiveawayCommand extends AbstractCommand
 			content += ` **${giveaway.giveawayData.title}**`
 		}
 		content += ` vient de se terminer !`
-		content += ` Bravo ${winners.length > 1 ? 'aux gagnants' : 'au gagnant'} !\n${winnersStr}`
 
-		const embed = new Discord.MessageEmbed()
-		embed.setTitle(giveawayData.title)
-		if (giveawayData.description)
+		if (winners.length <= 0)
 		{
-			embed.setDescription(giveawayData.description)
-		}
-		if (giveawayData.color)
-		{
-			embed.setColor(giveawayData.color)
-		}
-		embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
-		if (interaction.user)
-		{
-			embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${interaction.user} !`)
-		}
-		embed.setFooter({
-				text: giveawayData.participants.length > 1
-					? `Merci aux ${giveawayData.participants.length} participants !`
-					: `Merci à l'unique participant !`,
-			})
-
-		// Announce the giveaway winner!
-		interaction.channel.send({ content,
-				embeds: [embed],
-				reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
-			})
-			.then(() =>
-				{
-					this.state.setState(db =>
-					{
-						giveawayData.participants.forEach(participantId =>
-							{
-								// Save participations
-								const participations = (db.giveawayStats.participations[participantId] || 0) + 1
-								db.giveawayStats.participations[participantId] = participations
-								this.bot.logger.debug(`${participantId} now has ${participations} participations`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
-							})
-
-						winners.forEach(winnerId =>
-							{
-								// Save wins
-								const wins = (db.giveawayStats.wins[winnerId] || 0) + 1
-								db.giveawayStats.wins[winnerId] = wins
-								this.bot.logger.debug(`${winnerId} now has ${wins} wins`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
-							})
-
-						db.giveaways.delete(giveaway.giveawayData.giveawayMessageId)
-					})
+			interaction.reply({
+					content: `There was no participants on this giveaway.`,
+					ephemeral: true,
 				})
-			.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
+
+			content += ` Il n'y a malheureusement eu aucun participant 😅`
+
+			// Announce the lack of a winnner
+			interaction.channel.send({ content,
+					reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
+				})
+				.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
+		}
+		else
+		{
+			const winnersStr = winners.map(winner => `<@${winner}>`).join(`\n`)
+			content += ` Bravo ${winners.length > 1 ? 'aux gagnants' : 'au gagnant'} !\n${winnersStr}`
+
+			const embed = new Discord.MessageEmbed()
+			embed.setTitle(giveawayData.title)
+			if (giveawayData.description)
+			{
+				embed.setDescription(giveawayData.description)
+			}
+			if (giveawayData.color)
+			{
+				embed.setColor(giveawayData.color)
+			}
+			embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
+			if (interaction.user)
+			{
+				embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${interaction.user} !`)
+			}
+			embed.setFooter({
+					text: giveawayData.participants.length > 1
+						? `Merci aux ${giveawayData.participants.length} participants !`
+						: `Merci à l'unique participant !`,
+				})
+
+			// Announce the giveaway winner!
+			interaction.channel.send({ content,
+					embeds: [embed],
+					reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
+				})
+				.then(() =>
+					{
+						this.state.setState(db =>
+						{
+							giveawayData.participants.forEach(participantId =>
+								{
+									// Save participations
+									const participations = (db.giveawayStats.participations[participantId] || 0) + 1
+									db.giveawayStats.participations[participantId] = participations
+									this.bot.logger.debug(`${participantId} now has ${participations} participations`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
+								})
+
+							winners.forEach(winnerId =>
+								{
+									// Save wins
+									const wins = (db.giveawayStats.wins[winnerId] || 0) + 1
+									db.giveawayStats.wins[winnerId] = wins
+									this.bot.logger.debug(`${winnerId} now has ${wins} wins`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
+								})
+						})
+					})
+				.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
+		}
 	}
 
 	// /**
