@@ -10,7 +10,7 @@
 	},
 	"repository": "https://github.com/2gether-asso/2gether-bot",
 	"author": "Matiboux",
-	"license": "MIT",
+	"license": "AGPL-3.0",
 	"dependencies": {
 		"@discordjs/builders": "^0.12.0",
 		"discord-api-types": "^0.26.0",
