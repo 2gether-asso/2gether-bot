@@ -748,9 +748,12 @@ class PlayCommand extends AbstractCommand
 				dbRadio.volume = volume
 				return
 			}
+
+			this.bot.logger.warn(`setVolume: Not using inline volume`, 'PlayCommand')
+			return
 		}
 
-		throw new Error('Cannot change volume')
+		this.bot.logger.debug(`setVolume: Not playing`, 'PlayCommand')
 	}
 
 	protected messageComponentHandlerFilter(listener: MessageComponentListener, interaction: Discord.MessageComponentInteraction): boolean
