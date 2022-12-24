@@ -414,7 +414,7 @@ class PlayCommand extends AbstractCommand
 													new Discord.MessageButton()
 														.setCustomId(this.COMPONENT_PLAY)
 														.setLabel(RadioControlEmojis.PLAY)
-														.setStyle('SUCCESS'),
+														.setStyle('SECONDARY'),
 													new Discord.MessageButton()
 														.setCustomId(this.COMPONENT_PAUSE)
 														.setLabel(RadioControlEmojis.PAUSE)
@@ -426,7 +426,7 @@ class PlayCommand extends AbstractCommand
 													new Discord.MessageButton()
 														.setCustomId(this.COMPONENT_LOOP_TOGGLE)
 														.setLabel(RadioControlEmojis.LOOP_TOGGLE)
-														.setStyle('SUCCESS'),
+														.setStyle('SECONDARY'),
 												),
 										]
 									}))
