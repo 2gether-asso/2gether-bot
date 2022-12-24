@@ -406,7 +406,7 @@ class PlayCommand extends AbstractCommand
 										content: null,
 										components: [
 											new Discord.MessageActionRow()
-												.addComponents(
+												.setComponents(
 													new Discord.MessageButton()
 														.setCustomId(this.COMPONENT_PREVIOUS)
 														.setLabel(RadioControlEmojis.PREVIOUS)
@@ -426,6 +426,29 @@ class PlayCommand extends AbstractCommand
 													new Discord.MessageButton()
 														.setCustomId(this.COMPONENT_LOOP_TOGGLE)
 														.setLabel(RadioControlEmojis.LOOP_TOGGLE)
+														.setStyle('SECONDARY'),
+												),
+											new Discord.MessageActionRow()
+												.setComponents(
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_CLEAR)
+														.setLabel(RadioControlEmojis.CLEAR)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_STOP)
+														.setLabel(RadioControlEmojis.STOP)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_MUTE)
+														.setLabel(RadioControlEmojis.MUTE)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_VOLUME_DOWN)
+														.setLabel(RadioControlEmojis.VOLUME_DOWN)
+														.setStyle('SECONDARY'),
+													new Discord.MessageButton()
+														.setCustomId(this.COMPONENT_VOLUME_UP)
+														.setLabel(RadioControlEmojis.VOLUME_UP)
 														.setStyle('SECONDARY'),
 												),
 										]
