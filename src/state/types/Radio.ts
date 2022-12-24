@@ -53,6 +53,9 @@ class Radio extends AbstractDBType
         this.volume = 0.5
         this.authorId = undefined
         this.guildId = undefined
+        this.voiceChannelId = undefined
+        this.messageChannelId = undefined
+        this.messageId = undefined
         this.embedMessageId = undefined
         this.embedTitle = 'Radio'
         this.embedColor = 'RANDOM'
