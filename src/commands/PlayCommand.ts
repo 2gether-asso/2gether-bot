@@ -740,6 +740,11 @@ class PlayCommand extends AbstractCommand
 		{
 			volume = 1
 		}
+		else
+		{
+			// Round to 2 decimals to avoid floating point errors
+			volume = Math.round(volume * 100) / 100
+		}
 
 		const state = this.playerSubscription.player.state
 		if (state.status === AudioPlayerStatus.Playing || state.status === AudioPlayerStatus.Paused)
