@@ -389,6 +389,7 @@ class PlayCommand extends AbstractCommand
 			.then(message =>
 				{
 					// Configure the radio
+					dbRadio.volume = 0.5
 					dbRadio.embedMessageId = message.id
 					dbRadio.authorId = interaction.user.id
 					dbRadio.guildId = guild.id
@@ -689,9 +690,10 @@ class PlayCommand extends AbstractCommand
 				highWaterMark: 1 << 25,
 			})
 
+		const inlineVolume = true
 		const resource = createAudioResource(stream,
 			{
-				inlineVolume: true,
+				inlineVolume: inlineVolume,
 				metadata:
 					{
 						title: 'Meep. owo',
@@ -715,6 +717,9 @@ class PlayCommand extends AbstractCommand
 
 		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
 			this.bot.logger.debug('Audio player is in the Playing state!', 'PlayCommand') //, oldState, newState)
+
+			// Fix volume to the current value
+			this.setVolume(dbRadio)
 
 			// // Handle loop modes
 			// if (dbRadio.loopMode === 'single') dbRadio.queue.unshift(next);
@@ -784,7 +789,7 @@ class PlayCommand extends AbstractCommand
 	}
 
 	// protected async setVolume(listener: MessageComponentListener, dbRadio: Radio, volume: number): Promise<void>
-	protected async setVolume(dbRadio: Radio, volume: number): Promise<void>
+	protected async setVolume(dbRadio: Radio, volume?: number): Promise<void>
 	{
 		if (!this.playerSubscription)
 		{
@@ -792,31 +797,38 @@ class PlayCommand extends AbstractCommand
 			throw new Error('No player')
 		}
 
-		if (volume <= Number.EPSILON)
-		{
-			volume = 0
-		}
-		else if (volume >= 1 - Number.EPSILON)
-		{
-			volume = 1
-		}
-		else
-		{
-			// Round to 2 decimals to avoid floating point errors
-			volume = Math.round(volume * 100) / 100
-		}
-
 		const state = this.playerSubscription.player.state
 		if (state.status === AudioPlayerStatus.Playing || state.status === AudioPlayerStatus.Paused)
 		{
-			if (state.resource.volume)
+			if (!state.resource.volume)
 			{
-				state.resource.volume.setVolumeLogarithmic(volume)
-				dbRadio.volume = volume
+				this.bot.logger.warn(`setVolume: Not using inline volume`, 'PlayCommand')
 				return
 			}
 
-			this.bot.logger.warn(`setVolume: Not using inline volume`, 'PlayCommand')
+			if (volume !== undefined)
+			{
+				if (volume <= Number.EPSILON)
+				{
+					volume = 0
+				}
+				else if (volume >= 1 - Number.EPSILON)
+				{
+					volume = 1
+				}
+				else
+				{
+					// Round to 2 decimals to avoid floating point errors
+					volume = Math.round(volume * 100) / 100
+				}
+			}
+			else
+			{
+				volume = dbRadio.volume
+			}
+
+			state.resource.volume.setVolumeLogarithmic(volume)
+			dbRadio.volume = volume
 			return
 		}
 
