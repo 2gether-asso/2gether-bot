@@ -1,10 +1,10 @@
-import { AbstractDBType } from 'discord-mel'
+import { AbstractDBType, Discord, ISerialize } from 'discord-mel'
 
 import RadioLoopMode from './RadioLoopMode'
 
 class Radio extends AbstractDBType
 {
-    public listenerId?: string
+    // public listenerId?: string
 
     /**
      * Queue of next tracks to play
@@ -24,6 +24,22 @@ class Radio extends AbstractDBType
 
     public volume!: number
 
+	public authorId?: Discord.Snowflake
+
+	public guildId?: Discord.Snowflake
+
+    public voiceChannelId?: Discord.Snowflake
+
+    public messageChannelId?: Discord.Snowflake
+
+    public messageId?: Discord.Snowflake
+
+	public embedMessageId?: Discord.Snowflake
+
+	public embedTitle!: string
+
+	public embedColor!: Discord.ColorResolvable
+
     public constructor(data?: AbstractDBType)
     {
         super(data)
@@ -35,6 +51,11 @@ class Radio extends AbstractDBType
         this.history = []
         this.loopMode = RadioLoopMode.NONE
         this.volume = 0.5
+        this.authorId = undefined
+        this.guildId = undefined
+        this.embedMessageId = undefined
+        this.embedTitle = 'Radio'
+        this.embedColor = 'RANDOM'
     }
 }
 
