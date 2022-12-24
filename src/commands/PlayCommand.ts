@@ -395,7 +395,7 @@ class PlayCommand extends AbstractCommand
 					dbRadio.voiceChannelId = voiceChannel.id
 					dbRadio.messageChannelId = message.channel.id
 					dbRadio.messageId = message.id
-					dbRadio.embedTitle = '2GETHER Radio 📻'
+					dbRadio.embedTitle = '📻  2GETHER Radio'
 					dbRadio.embedColor = '#0099ff'
 
 					// Inform the user that the message listener has been created
@@ -491,7 +491,14 @@ class PlayCommand extends AbstractCommand
 			.set(this.COMPONENT_VOLUME_DOWN, this.componentVolumeDownHandler.bind(this, dbRadio))
 			.set(this.COMPONENT_VOLUME_UP, this.componentVolumeUpHandler.bind(this, dbRadio))
 
-		componentsHandlers.get(interaction.customId)?.()
+		const componentsHandler = componentsHandlers.get(interaction.customId)
+		if (!componentsHandler)
+		{
+			this.bot.logger.warn(`Unknown component ID: ${interaction.customId}`, 'PlayCommand')
+			return
+		}
+
+		componentsHandler()
 			.then(() =>
 				{
 					this.updateMessageEmbed(dbRadio)
