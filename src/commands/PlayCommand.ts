@@ -269,6 +269,12 @@ class PlayCommand extends AbstractCommand
 		// 	this.players.delete(listenerId)
 		// }
 
+		if (this.playerSubscription)
+		{
+			this.playerSubscription.unsubscribe()
+			this.playerSubscription = undefined
+		}
+
 		if (this.player)
 		{
 			const result = this.player.stop()
