@@ -1,4 +1,4 @@
-import { Snowflake } from 'discord-api-types'
+import { Snowflake } from 'discord-api-types/v9'
 import { AbstractDBMapType } from 'discord-mel'
 
 import Giveaway from './Giveaway'

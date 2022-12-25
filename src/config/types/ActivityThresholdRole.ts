@@ -1,4 +1,4 @@
-import { Snowflake } from 'discord-api-types'
+import { Snowflake } from 'discord-api-types/v9'
 import { AbstractConfigType } from 'discord-mel'
 
 class ActivityThresholdRole extends AbstractConfigType
