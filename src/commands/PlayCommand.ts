@@ -221,18 +221,12 @@ class PlayCommand extends AbstractCommand
 	// protected getPlayer(listener: MessageComponentListener): AudioPlayer
 	protected getPlayer(dbRadio: Radio): AudioPlayer
 	{
-		// const player = this.players.get(listener.id)
-		// if (player)
-		// {
-		// 	return player
-		// }
-
 		if (this.player)
 		{
 			return this.player
 		}
 
-		const newPlayer = createAudioPlayer(
+		const player = createAudioPlayer(
 			{
 				behaviors:
 					{
@@ -240,32 +234,122 @@ class PlayCommand extends AbstractCommand
 					}
 			})
 
-		newPlayer.on('error', error =>
+		player.on('error', error =>
 			this.bot.logger.warn('Player error', 'PlayCommand', error))
 
-		newPlayer.on('debug', message =>
+		player.on('debug', message =>
 			this.bot.logger.debug(`Player debug:\n${message}`, 'PlayCommand'))
 
-		// newPlayer.on('subscribe', subscription => {})
-		// newPlayer.on('unsubscribe', subscription => {})
-		// newPlayer.on('stateChange', (oldState, newState) => {})
+		// player.on('subscribe', subscription => {})
+		// player.on('unsubscribe', subscription => {})
+		// player.on('stateChange', (oldState, newState) => {})
 
-		// newPlayer.on(AudioPlayerStatus.Playing)
-		// newPlayer.on(AudioPlayerStatus.Buffering)
-		// newPlayer.on(AudioPlayerStatus.Idle)
-		// newPlayer.on(AudioPlayerStatus.Paused)
-		// newPlayer.on(AudioPlayerStatus.AutoPaused)
+		// player.on(AudioPlayerStatus.Playing)
+		// player.on(AudioPlayerStatus.Buffering)
+		// player.on(AudioPlayerStatus.Idle)
+		// player.on(AudioPlayerStatus.Paused)
+		// player.on(AudioPlayerStatus.AutoPaused)
 
-		newPlayer.on(AudioPlayerStatus.Idle, () =>
+		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
+			this.bot.logger.debug('Audio player is in the Playing state!', 'PlayCommand') //, oldState, newState)
+
+			// Fix volume to the current value
+			this.setVolume(dbRadio)
+
+			// // Handle loop modes
+			// if (dbRadio.loopMode === 'single') dbRadio.queue.unshift(next);
+			// else if (dbRadio.loopMode === 'queue') dbRadio.queue.push(next);
+			// // else, the track is just removed from the queue
+
+			// this.isPlaying = true;
+
+			// // Send a message when the stream starts
+			// if (firstTrack)
+			// 	message.channel.send(`Démarrage de la lecture ! 🎵`, await getStatusEmbed());
+			// else
+			// 	message.channel.send(`Morceau suivant ! 🎵`, await getStatusEmbed());
+
+			const playerEmbedUpdate = () =>
+				{
+					if (this.player && this.player.state.status === AudioPlayerStatus.Playing)
+					{
+						this.updateMessageEmbed(dbRadio)
+							.then(() =>
+								{
+									// Try to update the player embed again later
+									this.playerEmbedUpdater = setTimeout(playerEmbedUpdate, 1000)
+								})
+					}
+				}
+
+			if (this.playerEmbedUpdater)
 			{
-				// Play the next track
-				// const connection = getVoiceConnection(dbRadio.guildId)
-				this.playNext(dbRadio)
-			})
+				clearTimeout(this.playerEmbedUpdater)
+			}
 
-		// this.players.set(listener.id, newPlayer)
-		this.player = newPlayer
-		return newPlayer
+			// Update the player embed
+			playerEmbedUpdate()
+		});
+
+		player.on(AudioPlayerStatus.Buffering, (oldState, newState) => {
+			this.bot.logger.debug('Audio player is in the Buffering state!', 'PlayCommand') //, oldState, newState)
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
+			// Update the player embed
+			this.updateMessageEmbed(dbRadio)
+		});
+
+		player.on(AudioPlayerStatus.AutoPaused, (oldState, newState) => {
+			this.bot.logger.debug('Audio player is in the AutoPaused state!', 'PlayCommand') //, oldState, newState)
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
+			// Update the status embed
+			this.updateMessageEmbed(dbRadio)
+		});
+
+		player.on(AudioPlayerStatus.Paused, (oldState, newState) => {
+			this.bot.logger.debug('Audio player is in the Paused state!', 'PlayCommand') //, oldState, newState)
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
+			// Update the status embed
+			this.updateMessageEmbed(dbRadio)
+		});
+
+		player.on(AudioPlayerStatus.Idle, (oldState, newState) => {
+			this.bot.logger.debug('Audio player is in the Idle state!', 'PlayCommand') //, oldState, newState)
+
+			// this.connection?.disconnect() // Rejoining afterwards does not work
+			// this.playerSubscription?.player.stop()
+			// this.playerSubscription?.unsubscribe()
+			// voiceChannel.guild.me?.voice.disconnect()
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
+			// Update the status embed
+			this.updateMessageEmbed(dbRadio)
+
+			// Try to play the next track
+			this.playNext(dbRadio)
+		});
+
+		// this.players.set(listener.id, player)
+		this.player = player
+		return player
 	}
 
 	// protected stopPlayer(listenerId: string): void
@@ -396,7 +480,7 @@ class PlayCommand extends AbstractCommand
 					dbRadio.voiceChannelId = voiceChannel.id
 					dbRadio.messageChannelId = message.channel.id
 					dbRadio.messageId = message.id
-					dbRadio.embedTitle = '📻  2GETHER Radio'
+					dbRadio.embedTitle = '📻 🎶  2GETHER Radio'
 					dbRadio.embedColor = '#0099ff'
 
 					// Inform the user that the message listener has been created
@@ -734,100 +818,6 @@ class PlayCommand extends AbstractCommand
 		this.playerSubscription = connection.subscribe(player)
 		// this.playerSubscription?.connection.on()
 		// this.playerSubscription?.player.on()
-
-		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
-			this.bot.logger.debug('Audio player is in the Playing state!', 'PlayCommand') //, oldState, newState)
-
-			// Fix volume to the current value
-			this.setVolume(dbRadio)
-
-			// // Handle loop modes
-			// if (dbRadio.loopMode === 'single') dbRadio.queue.unshift(next);
-			// else if (dbRadio.loopMode === 'queue') dbRadio.queue.push(next);
-			// // else, the track is just removed from the queue
-
-			// this.isPlaying = true;
-
-			// // Send a message when the stream starts
-			// if (firstTrack)
-			// 	message.channel.send(`Démarrage de la lecture ! 🎵`, await getStatusEmbed());
-			// else
-			// 	message.channel.send(`Morceau suivant ! 🎵`, await getStatusEmbed());
-
-			const playerEmbedUpdate = () =>
-				{
-					if (this.player && this.player.state.status === AudioPlayerStatus.Playing)
-					{
-						this.updateMessageEmbed(dbRadio)
-							.then(() =>
-								{
-									// Try to update the player embed again later
-									this.playerEmbedUpdater = setTimeout(playerEmbedUpdate, 1000)
-								})
-					}
-				}
-
-			if (this.playerEmbedUpdater)
-			{
-				clearTimeout(this.playerEmbedUpdater)
-			}
-
-			// Update the player embed
-			playerEmbedUpdate()
-		});
-
-		player.on(AudioPlayerStatus.Buffering, (oldState, newState) => {
-			this.bot.logger.debug('Audio player is in the Buffering state!', 'PlayCommand') //, oldState, newState)
-
-			if (this.playerEmbedUpdater)
-			{
-				clearTimeout(this.playerEmbedUpdater)
-			}
-
-			// Update the player embed
-			this.updateMessageEmbed(dbRadio)
-		});
-
-		player.on(AudioPlayerStatus.AutoPaused, (oldState, newState) => {
-			this.bot.logger.debug('Audio player is in the AutoPaused state!', 'PlayCommand') //, oldState, newState)
-
-			if (this.playerEmbedUpdater)
-			{
-				clearTimeout(this.playerEmbedUpdater)
-			}
-
-			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
-		});
-
-		player.on(AudioPlayerStatus.Paused, (oldState, newState) => {
-			this.bot.logger.debug('Audio player is in the Paused state!', 'PlayCommand') //, oldState, newState)
-
-			if (this.playerEmbedUpdater)
-			{
-				clearTimeout(this.playerEmbedUpdater)
-			}
-
-			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
-		});
-
-		player.on(AudioPlayerStatus.Idle, (oldState, newState) => {
-			this.bot.logger.debug('Audio player is in the Idle state!', 'PlayCommand') //, oldState, newState)
-
-			// this.connection?.disconnect() // Rejoining afterwards does not work
-			// this.playerSubscription?.player.stop()
-			// this.playerSubscription?.unsubscribe()
-			// voiceChannel.guild.me?.voice.disconnect()
-
-			if (this.playerEmbedUpdater)
-			{
-				clearTimeout(this.playerEmbedUpdater)
-			}
-
-			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
-		});
 
 		player.play(resource)
 	}
