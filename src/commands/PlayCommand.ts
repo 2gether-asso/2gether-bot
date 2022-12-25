@@ -69,7 +69,7 @@ class PlayCommand extends AbstractCommand
 
 	protected playerSubscription?: PlayerSubscription
 
-	protected playerEmbedUpdater?: NodeJS.Timer
+	protected playerEmbedUpdater?: NodeJS.Timeout
 
 	// protected isPlaying: boolean = false
 
