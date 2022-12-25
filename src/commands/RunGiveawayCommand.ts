@@ -405,15 +405,11 @@ class RunGiveawayCommand extends AbstractCommand
 
 		if (winners.length <= 0)
 		{
-			interaction.reply({
-					content: `There was no participants on this giveaway.`,
-					ephemeral: true,
-				})
-
 			content += ` Il n'y a malheureusement eu aucun participant 😅`
 
 			// Announce the lack of a winnner
-			interaction.channel.send({ content,
+			interaction.channel.send({
+					content,
 					reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
 				})
 				.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
