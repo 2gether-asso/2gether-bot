@@ -1,5 +1,5 @@
 import { AbstractState } from 'discord-mel'
-import StateDB from './StateDB'
+import StateDB from './StateDB.js'
 
 class State extends AbstractState<StateDB>
 {

@@ -1,6 +1,6 @@
 import { DBListener, Discord, ListenerTypes, Mel, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
+import AbstractCommand from './AbstractCommand.js'
 
 class ActivityRankCommand extends AbstractCommand
 {

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { Discord, ListenerTypes, Mel, MessageComponentHandler, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageReactionListenerRegister, DBListener, MessageComponentListener } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
+import AbstractCommand from './AbstractCommand.js'
 
 class MessageReactionListenerData
 {

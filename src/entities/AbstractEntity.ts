@@ -1,7 +1,7 @@
 import { Mel } from 'discord-mel'
 
-import Config from '../config/Config'
-import State from '../state/State'
+import Config from '../config/Config.js'
+import State from '../state/State.js'
 
 abstract class AbstractEntity
 {

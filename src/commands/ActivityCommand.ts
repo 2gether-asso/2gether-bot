@@ -1,6 +1,6 @@
 import { Mel, Discord } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
+import AbstractCommand from './AbstractCommand.js'
 
 class ActivityCommand extends AbstractCommand
 {

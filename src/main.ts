@@ -2,16 +2,17 @@ import path from 'path'
 
 import { Mel } from 'discord-mel'
 
-import State from './state/State'
-import ActivityHooks from './hooks/ActivityHooks'
-import Config from './config/Config'
+import __abspath from './__abspath.js'
+import State from './state/State.js'
+import ActivityHooks from './hooks/ActivityHooks.js'
+import Config from './config/Config.js'
 
 Mel.Services.Config = Config
 Mel.Services.State = State
 
 const bot = new Mel(
 	{
-		absPath: path.dirname(__dirname),
+		absPath: path.dirname(__abspath),
 		configFile: './config.json',
 		logFile: './log.txt',
 	},

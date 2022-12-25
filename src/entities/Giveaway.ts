@@ -1,8 +1,8 @@
 import { Discord, Mel } from 'discord-mel'
 
-import GiveawayRunResults from '../enums/GiveawayRunResults'
-import GiveawayData from '../state/types/Giveaway'
-import AbstractEntity from './AbstractEntity'
+import GiveawayRunResults from '../enums/GiveawayRunResults.js'
+import GiveawayData from '../state/types/Giveaway.js'
+import AbstractEntity from './AbstractEntity.js'
 
 class Giveaway extends AbstractEntity
 {

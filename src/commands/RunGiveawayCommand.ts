@@ -2,9 +2,9 @@ import { ApplicationCommandType } from 'discord-api-types/v9'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
 import { Mel, Discord } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
-import Giveaway from '../entities/Giveaway'
-import GiveawayRunResults from '../enums/GiveawayRunResults'
+import AbstractCommand from './AbstractCommand.js'
+import Giveaway from '../entities/Giveaway.js'
+import GiveawayRunResults from '../enums/GiveawayRunResults.js'
 
 type ComponentId = `${string}:${string}`
 

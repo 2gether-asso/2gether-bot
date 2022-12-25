@@ -1,6 +1,6 @@
 import { IUnserialize } from 'discord-mel'
 
-import ActivityThresholdRole from './ActivityThresholdRole'
+import ActivityThresholdRole from './ActivityThresholdRole.js'
 
 class ActivityThresholdRoles extends Array<ActivityThresholdRole> implements IUnserialize
 {

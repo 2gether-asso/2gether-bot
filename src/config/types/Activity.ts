@@ -1,5 +1,5 @@
-import ActivityRankingRoles from './ActivityRankingRoles'
-import ActivityThresholdRoles from './ActivityThresholdRoles'
+import ActivityRankingRoles from './ActivityRankingRoles.js'
+import ActivityThresholdRoles from './ActivityThresholdRoles.js'
 
 class Activity
 {
