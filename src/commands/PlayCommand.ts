@@ -554,6 +554,27 @@ class PlayCommand extends AbstractCommand
 		// embed.addField('queue', `:${dbRadio.queue.join(',')}`, false)
 		// embed.addField('lastPlayed', `${dbRadio.lastPlayed}`, false)
 
+		const getTrackInfo = async (urls: string[], index: number) =>
+		{
+			if (urls.length > 0 && index >= 0 && index < urls.length)
+			{
+				try
+				{
+					return await YTDL.getInfo(urls[index])
+				}
+				catch
+				{
+					// Failed to get info
+					urls.splice(index, 1) // Remove invalid URL from history
+				}
+			}
+
+			return undefined
+		}
+
+		const nextTrackInfo = await getTrackInfo(dbRadio.queue, 0)
+		const nextTrackTitle = nextTrackInfo ? `\n\n⏭️  \`${nextTrackInfo.videoDetails.title}\`` : ''
+
 		// const player = this.players.get(listener.id)
 		const player = this.player
 		if (player)
@@ -562,12 +583,10 @@ class PlayCommand extends AbstractCommand
 				? '▶️' // Play icon
 				: '⏸' // Pause icon
 
-			// if (!currentTrackInfo && Storage.db.playlist.lastPlayed)
-			const currentTrackInfo = dbRadio.history.length > 0 ? await YTDL.getInfo(dbRadio.history[dbRadio.history.length - 1]) : undefined
-
-			const trackTitle = currentTrackInfo
-				? `${status} \`${currentTrackInfo.videoDetails.title}\``
-				: `${status} _Pas d'information_`
+			const currentTrackInfo = await getTrackInfo(dbRadio.history, dbRadio.history.length - 1)
+			const currentTrackTitle = currentTrackInfo
+				? `${status}  \`${currentTrackInfo.videoDetails.title}\``
+				: `${status}  _Pas d'information_`
 
 			const progressLine = ((): string =>
 				{
@@ -591,12 +610,12 @@ class PlayCommand extends AbstractCommand
 					return `\n${this.secondsToStr(playbackSeconds)} ▬🔵▬▬▬▬▬▬▬▬▬▬ ▬ ▬ ▬`
 				})()
 
-			embed.setDescription(`${trackTitle}${progressLine}`)
+			embed.setDescription(`${currentTrackTitle}${progressLine}${nextTrackTitle}`)
 		}
 		else {
-			const trackTitle = `⏹ _Rien ne joue_`
+			const currentTrackTitle = `⏹  _Radio stoppée_`
 
-			embed.setDescription(`${trackTitle}`)
+			embed.setDescription(`${currentTrackTitle}${nextTrackTitle}`)
 		}
 		// }
 
