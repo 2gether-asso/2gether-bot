@@ -197,8 +197,9 @@ class RunGiveawayCommand extends AbstractCommand
 
 		if (giveaway)
 		{
+			this.bot.logger.debug(`Confirmed`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Winners have been confimed!`,
+					content: `Les gagnants sont confimés.`,
 					components: [],
 				})
 
@@ -225,8 +226,9 @@ class RunGiveawayCommand extends AbstractCommand
 			// Clear the giveaway winners
 			giveaway.clearWinners()
 
+			this.bot.logger.debug(`Redrawing`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Winners have been redrawn!`,
+					content: `Les gagnants sont retirés au sort.`,
 					components: [],
 				})
 				.then(() =>
@@ -257,8 +259,9 @@ class RunGiveawayCommand extends AbstractCommand
 			// Reset the giveaway reaction emoji
 			giveaway.setReactionEmoji(undefined)
 
+			this.bot.logger.debug(`Reset`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Reaction emoji has been resetted!`,
+					content: `Le giveaway est réinitialisé.`,
 					components: [],
 				})
 				.then(() =>
@@ -286,7 +289,7 @@ class RunGiveawayCommand extends AbstractCommand
 													.addComponents(
 														new Discord.MessageSelectMenu()
 															.setCustomId(this.COMPONENT_SELECT_EMOJI)
-															.setPlaceholder('Nothing selected')
+															.setPlaceholder('Aucune sélection')
 															.addOptions(
 																allReactions.map((reaction, key) =>
 																	({
@@ -369,7 +372,7 @@ class RunGiveawayCommand extends AbstractCommand
 								giveaway.setContextMessageId(reply.id)
 							})
 
-						this.bot.logger.debug('Prompt to confirm winners', `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
+						this.bot.logger.debug('Prompt to confirm', `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 					}
 
 					return result
