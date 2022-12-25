@@ -456,6 +456,10 @@ class PlayCommand extends AbstractCommand
 					})
 			}
 
+			interaction.reply({
+					content: `J'ai ajouté ta musique à la playlist`,
+					ephemeral: true,
+				})
 			return
 		}
 
