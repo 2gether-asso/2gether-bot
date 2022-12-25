@@ -15,7 +15,7 @@
 		"@discordjs/builders": "^0.12.0",
 		"discord-api-types": "^0.26.0",
 		"discord-mel": "^1.7.0",
-		"typescript": "^4.5.2"
+		"typescript": "~4.6.2"
 	},
 	"devDependencies": {
 		"eslint": "^8.10.0"
