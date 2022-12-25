@@ -879,11 +879,6 @@ class PlayCommand extends AbstractCommand
 		this.bot.logger.debug(`setVolume: Not playing`, 'PlayCommand')
 	}
 
-	protected async componentPreviousHandler(dbRadio: Radio)
-	{
-		// this.playPrevious(dbRadio)
-	}
-
 	protected async componentPlayHandler(dbRadio: Radio)
 	{
 		this.player && this.player.unpause()
@@ -892,6 +887,25 @@ class PlayCommand extends AbstractCommand
 	protected async componentPauseHandler(dbRadio: Radio)
 	{
 		this.player && this.player.pause()
+	}
+
+	protected async componentPreviousHandler(dbRadio: Radio)
+	{
+		// Pop the history twice if a track is currently playing (the first popped track is the current track)
+		const popCount = this.player ? 2 : 1
+
+		// Pop the history and add the popped tracks to the queue
+		for (let i = 0; i < popCount; ++i)
+		{
+			if (dbRadio.history.length > 0)
+			{
+				const track = dbRadio.history.pop()
+				track && dbRadio.queue.unshift(track)
+			}
+		}
+
+		// Then, play the previous track as the next track
+		this.playNext(dbRadio)
 	}
 
 	protected async componentNextHandler(dbRadio: Radio)
