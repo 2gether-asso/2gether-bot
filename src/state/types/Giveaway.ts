@@ -1,4 +1,4 @@
-import { Snowflake } from 'discord-api-types'
+import { Snowflake } from 'discord-api-types/v9'
 import { AbstractDBType, Discord, Mel } from 'discord-mel'
 
 import GiveawayEntity from '../../entities/Giveaway'

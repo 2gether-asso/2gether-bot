@@ -1,4 +1,4 @@
-import { ApplicationCommandType } from 'discord-api-types'
+import { ApplicationCommandType } from 'discord-api-types/v9'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
 import { Mel, Discord } from 'discord-mel'
 
