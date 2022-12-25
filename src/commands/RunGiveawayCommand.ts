@@ -432,10 +432,10 @@ class RunGiveawayCommand extends AbstractCommand
 			{
 				embed.setColor(giveawayData.color)
 			}
-			embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
+			embed.addFields({ name: winners.length > 1 ? 'Gagnants' : 'Gagnant', value: winnersStr })
 			if (interaction.user)
 			{
-				embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${interaction.user} !`)
+				embed.addFields({ name: 'Pour récupérer votre cadeau :', value: `Envoyez un message privé à ${interaction.user} !` })
 			}
 			embed.setFooter({
 					text: giveawayData.participants.length > 1
