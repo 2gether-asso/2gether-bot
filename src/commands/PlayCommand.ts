@@ -698,6 +698,9 @@ class PlayCommand extends AbstractCommand
 		// Push the track to play in history
 		dbRadio.history.push(nextTrack)
 
+		// Save changes to the queue
+		this.state.save()
+
 		// Unmute
 		// connection.setSpeaking(true)
 		// await guild.me?.voice.setMute(false)
@@ -720,9 +723,6 @@ class PlayCommand extends AbstractCommand
 
 			})
 
-		const player = this.getPlayer(dbRadio)
-		player.play(resource)
-
 		// const connection = this.getConnection(voiceChannel)
 		if (connection.state.status === VoiceConnectionStatus.Disconnected)
 		{
@@ -730,6 +730,7 @@ class PlayCommand extends AbstractCommand
 			connection.rejoin()
 		}
 
+		const player = this.getPlayer(dbRadio)
 		this.playerSubscription = connection.subscribe(player)
 		// this.playerSubscription?.connection.on()
 		// this.playerSubscription?.player.on()
@@ -761,10 +762,15 @@ class PlayCommand extends AbstractCommand
 							.then(() =>
 								{
 									// Try to update the player embed again later
-									setTimeout(playerEmbedUpdate, 1000)
+									this.playerEmbedUpdater = setTimeout(playerEmbedUpdate, 1000)
 								})
 					}
 				}
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
 
 			// Update the player embed
 			playerEmbedUpdate()
@@ -773,6 +779,11 @@ class PlayCommand extends AbstractCommand
 		player.on(AudioPlayerStatus.Buffering, (oldState, newState) => {
 			this.bot.logger.debug('Audio player is in the Buffering state!', 'PlayCommand') //, oldState, newState)
 
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
 			// Update the player embed
 			this.updateMessageEmbed(dbRadio)
 		});
@@ -780,12 +791,22 @@ class PlayCommand extends AbstractCommand
 		player.on(AudioPlayerStatus.AutoPaused, (oldState, newState) => {
 			this.bot.logger.debug('Audio player is in the AutoPaused state!', 'PlayCommand') //, oldState, newState)
 
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
 			// Update the status embed
 			this.updateMessageEmbed(dbRadio)
 		});
 
 		player.on(AudioPlayerStatus.Paused, (oldState, newState) => {
 			this.bot.logger.debug('Audio player is in the Paused state!', 'PlayCommand') //, oldState, newState)
+
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
 
 			// Update the status embed
 			this.updateMessageEmbed(dbRadio)
@@ -799,12 +820,16 @@ class PlayCommand extends AbstractCommand
 			// this.playerSubscription?.unsubscribe()
 			// voiceChannel.guild.me?.voice.disconnect()
 
+			if (this.playerEmbedUpdater)
+			{
+				clearTimeout(this.playerEmbedUpdater)
+			}
+
 			// Update the status embed
 			this.updateMessageEmbed(dbRadio)
 		});
 
-		// Save changes to the queue
-		this.state.save()
+		player.play(resource)
 	}
 
 	// protected async setVolume(listener: MessageComponentListener, dbRadio: Radio, volume: number): Promise<void>
