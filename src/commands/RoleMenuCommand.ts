@@ -87,7 +87,7 @@ class RoleMenuCommand extends AbstractCommand
 			.add(this.COMPONENT_SELECT_ROLE)
 
 		this.guildOnly = true
-		this.permissions.add('ADMINISTRATOR')
+		this.permissions.add(Discord.PermissionFlagsBits.Administrator)
 
 		this.handlers
 			.set(
@@ -126,7 +126,7 @@ class RoleMenuCommand extends AbstractCommand
 			)
 	}
 
-	async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
+	async onCommandInteraction(interaction: Discord.CommandInteraction)
 	{
 		if (!interaction.isCommand())
 		{
@@ -158,12 +158,12 @@ class RoleMenuCommand extends AbstractCommand
 									{
 										content: null,
 										components: [
-											new Discord.MessageActionRow()
+											new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
 												.addComponents(
-													new Discord.MessageButton()
+													new Discord.ButtonBuilder()
 														.setCustomId(this.COMPONENT_FINISH)
 														.setLabel('Terminer')
-														.setStyle('SUCCESS')
+														.setStyle(Discord.ButtonStyle.Success)
 												)
 										]
 									}))
@@ -198,7 +198,7 @@ class RoleMenuCommand extends AbstractCommand
 
 	protected async updateMessageEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined): Promise<Discord.Message>
 	{
-		const embed = new Discord.MessageEmbed(message.embeds[0])
+		const embed = Discord.EmbedBuilder.from(message.embeds[0])
 		embed.spliceFields(0, 25) // Reset fields
 
 		if (!dbReactionListener)
@@ -215,12 +215,12 @@ class RoleMenuCommand extends AbstractCommand
 
 			if (data.status)
 			{
-				embed.addField('Status', `⚠️ ${data.status}`, false)
+				embed.addFields({ name: 'Status', value: `⚠️ ${data.status}`, inline: false })
 			}
 
 			if (dbReactionListener.timeout !== undefined)
 			{
-				embed.addField('Date de fin', `${new Date(dbReactionListener.timeout).toLocaleString('fr-FR')}`, false)
+				embed.addFields({ name: 'Date de fin', value: `${new Date(dbReactionListener.timeout).toLocaleString('fr-FR')}`, inline: false })
 			}
 
 			const emojiRoles = Object.entries(data.emojiRoles)
@@ -231,12 +231,12 @@ class RoleMenuCommand extends AbstractCommand
 			else
 			{
 				const rows = emojiRoles.map(([emoji, roleId]) =>
-					{
-						return `${emoji} - <@&${roleId}>`
-					})
+				{
+					return `${emoji} - <@&${roleId}>`
+				})
 
 				embed.setDescription(`Choisis tes rôles avec les réactions !`)
-				embed.addField('Roles', rows.join('\n'), false)
+				embed.addFields({ name: 'Roles', value: rows.join('\n'), inline: false })
 			}
 		}
 
@@ -295,7 +295,7 @@ class RoleMenuCommand extends AbstractCommand
 
 			// Ignore other reactions
 		}
-		else if (member.permissions.has('ADMINISTRATOR'))
+		else if (member.permissions.has(Discord.PermissionFlagsBits.Administrator))
 		{
 			const guild = listener.message.guild
 			guild.roles.fetch()
@@ -333,12 +333,16 @@ class RoleMenuCommand extends AbstractCommand
 						// 250 roles => 10 chunks of 25 roles => 2 groups of 5 chunks of 25 roles
 
 						// Generate and update the select menus
-						rolesGroups.forEach((rolesGroup, index) =>
+						type MessageComponentType = Discord.ActionRow<Discord.MessageActionRowComponent> | Discord.ActionRowBuilder
+						const messageComponents: MessageComponentType[] = Array.of(listener.message.components[0])
+						rolesGroups.forEach(rolesGroup =>
 							{
-								listener.message.components[index + 1] = new Discord.MessageActionRow()
+								// TODO: Discord.RoleSelectMenuBuilder
+								messageComponents.push(
+									new Discord.ActionRowBuilder<Discord.StringSelectMenuBuilder>()
 									.addComponents(
 										...rolesGroup.map(rolesChunk =>
-											new Discord.MessageSelectMenu()
+											new Discord.StringSelectMenuBuilder()
 												.setCustomId(this.COMPONENT_SELECT_ROLE)
 												.setMinValues(1)
 												.setMaxValues(1)
@@ -351,6 +355,7 @@ class RoleMenuCommand extends AbstractCommand
 														}))
 													)
 											)
+										)
 										)
 							})
 

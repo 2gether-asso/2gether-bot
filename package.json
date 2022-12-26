@@ -13,9 +13,7 @@
 	"license": "MIT",
 	"type": "module",
 	"dependencies": {
-		"@discordjs/builders": "^0.16.0",
-		"discord-api-types": "^0.37.0",
-		"discord-mel": "^1.7.6"
+		"discord-mel": "^1.8.0"
 	},
 	"devDependencies": {
 		"eslint": "^8.10.0",

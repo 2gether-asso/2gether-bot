@@ -1,6 +1,6 @@
 import path from 'path'
 
-import { Mel } from 'discord-mel'
+import { Discord, Mel } from 'discord-mel'
 
 import __abspath from './__abspath.js'
 import State from './state/State.js'
@@ -19,17 +19,17 @@ const bot = new Mel(
 	{
 		intents:
 			[
-				Mel.Intents.FLAGS.GUILDS,
-				Mel.Intents.FLAGS.GUILD_VOICE_STATES,
-				Mel.Intents.FLAGS.GUILD_MESSAGES,
-				Mel.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-				Mel.Intents.FLAGS.DIRECT_MESSAGES,
+				Discord.IntentsBitField.Flags.Guilds,
+				Discord.IntentsBitField.Flags.GuildVoiceStates,
+				Discord.IntentsBitField.Flags.GuildMessages,
+				Discord.IntentsBitField.Flags.GuildMessageReactions,
+				Discord.IntentsBitField.Flags.DirectMessages,
 			],
 		partials:
 			[
-				'MESSAGE',
-				'CHANNEL',
-				'REACTION',
+				Discord.Partials.Message,
+				Discord.Partials.Channel,
+				Discord.Partials.Reaction,
 			],
 	})
 

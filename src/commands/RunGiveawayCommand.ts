@@ -25,7 +25,7 @@ class RunGiveawayCommand extends AbstractCommand
 		this.description = 'Execute le tirage au sort.'
 
 		this.guildOnly = true
-		this.permissions.add('ADMINISTRATOR')
+		this.permissions.add(Discord.PermissionFlagsBits.Administrator)
 
 		// Legacy commands aliases
 		// this.commandAliases.add('rungiveaway')
@@ -81,9 +81,9 @@ class RunGiveawayCommand extends AbstractCommand
 		// }
 	}
 
-	public async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
+	public async onCommandInteraction(interaction: Discord.CommandInteraction)
 	{
-		if (!interaction.isContextMenu())
+		if (!interaction.isContextMenuCommand())
 		{
 			return
 		}
@@ -272,7 +272,7 @@ class RunGiveawayCommand extends AbstractCommand
 		}
 	}
 
-	protected async runGiveaway(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction, doFollowUp: boolean = false)
+	protected async runGiveaway(giveaway: Giveaway, interaction: Discord.CommandInteraction | Discord.MessageComponentInteraction, doFollowUp: boolean = false)
 	{
 		return giveaway.run()
 			.then(result =>
@@ -285,9 +285,9 @@ class RunGiveawayCommand extends AbstractCommand
 									const replyOptions: Discord.InteractionReplyOptions & { fetchReply: true } = {
 											content: 'Quelle reaction est liée au giveaway ?',
 											components: [
-												new Discord.MessageActionRow()
+												new Discord.ActionRowBuilder<Discord.StringSelectMenuBuilder>()
 													.addComponents(
-														new Discord.MessageSelectMenu()
+														new Discord.StringSelectMenuBuilder()
 															.setCustomId(this.COMPONENT_SELECT_EMOJI)
 															.setPlaceholder('Aucune sélection')
 															.addOptions(
@@ -340,21 +340,21 @@ class RunGiveawayCommand extends AbstractCommand
 						const replyOptions: Discord.InteractionReplyOptions & { fetchReply: true } = {
 								content: content,
 								components: [
-									new Discord.MessageActionRow()
+									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
 										.addComponents(
-											new Discord.MessageButton()
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_CONFIRM_WINNER)
 												.setLabel('Confirmer')
-												.setStyle('SUCCESS'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Success),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_REDRAW_WINNER)
 												.setLabel('Retirer au sort')
-												.setStyle('DANGER'),
+												.setStyle(Discord.ButtonStyle.Danger),
 											...(giveaway.giveawayData.reactionEmoji
-													? [new Discord.MessageButton()
+													? [new Discord.ButtonBuilder()
 														.setCustomId(this.COMPONENT_RESET_REACTION)
 														.setLabel('Sélectionner une autre réaction')
-														.setStyle('DANGER')]
+														.setStyle(Discord.ButtonStyle.Danger)]
 													: []
 												),
 										)
@@ -389,7 +389,7 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 	}
 
-	protected async announceWinner(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction): Promise<void>
+	protected async announceWinner(giveaway: Giveaway, interaction: Discord.CommandInteraction | Discord.MessageComponentInteraction): Promise<void>
 	{
 		if (!interaction.channel)
 		{
@@ -422,7 +422,7 @@ class RunGiveawayCommand extends AbstractCommand
 			const winnersStr = winners.map(winner => `<@${winner}>`).join(`\n`)
 			content += ` Bravo ${winners.length > 1 ? 'aux gagnants' : 'au gagnant'} !\n${winnersStr}`
 
-			const embed = new Discord.MessageEmbed()
+			const embed = new Discord.EmbedBuilder()
 			embed.setTitle(giveawayData.title)
 			if (giveawayData.description)
 			{

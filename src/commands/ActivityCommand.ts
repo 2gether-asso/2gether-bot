@@ -14,7 +14,7 @@ class ActivityCommand extends AbstractCommand
 		this.description = this.bot.translator.translate('activity.description')
 
 		this.guildOnly = true
-		this.permissions.add('ADMINISTRATOR')
+		this.permissions.add(Discord.PermissionFlagsBits.Administrator)
 
 		// Legacy commands aliases
 		this.commandAliases.add('activity')
@@ -22,7 +22,7 @@ class ActivityCommand extends AbstractCommand
 
 	async onMessage(message: Discord.Message): Promise<void>
 	{
-		const embed = new Discord.MessageEmbed()
+		const embed = new Discord.EmbedBuilder()
 			.setColor('#ff9933')
 			.setTitle(`Suivi de l'activité des membres`)
 			.setDescription(`Je suis chargée de suivre l'activité des membres sur ce serveur. Voici mes instructions :`);
@@ -85,8 +85,10 @@ class ActivityCommand extends AbstractCommand
 		else
 			rolesText += `Les rôles ne sont pas cumulés lors de leur attribution aux membres.`;
 
-		embed.addField(`Score d'activité`, activityText, true);
-		embed.addField(`Rôles`, rolesText, true);
+		embed.addFields(
+				{ name: `Score d'activité`, value: activityText, inline: true },
+				{ name: `Rôles`, value: rolesText, inline: true },
+			)
 
 		message.channel.send({ embeds: [embed] })
 	}
