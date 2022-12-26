@@ -1,5 +1,6 @@
-import { AbstractDBType, Discord, ISerialize } from 'discord-mel'
+import { AbstractDBType, Discord, Mel } from 'discord-mel'
 
+import RadioEntity from '../../entities/Radio.js'
 import RadioLoopMode from './RadioLoopMode.js'
 
 class Radio extends AbstractDBType
@@ -60,6 +61,11 @@ class Radio extends AbstractDBType
         this.embedTitle = 'Radio'
         this.embedColor = 'Random'
     }
+
+	public getEntity(bot: Mel): RadioEntity
+	{
+		return new RadioEntity(bot, this)
+	}
 }
 
 export default Radio
