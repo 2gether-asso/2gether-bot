@@ -882,7 +882,7 @@ class PlayCommand extends AbstractCommand
 
 	protected async componentPlayHandler(dbRadio: Radio)
 	{
-		this.player && this.player.unpause()
+		this.player ? this.player.unpause() : this.playNext(dbRadio)
 	}
 
 	protected async componentPauseHandler(dbRadio: Radio)
