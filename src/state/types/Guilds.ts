@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types/v9'
 import { AbstractDBMapType, Discord } from 'discord-mel'
 
-import Guild from './Guild'
+import Guild from './Guild.js'
 
 class Guilds extends AbstractDBMapType<Snowflake, Guild>
 {

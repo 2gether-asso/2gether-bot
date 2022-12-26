@@ -1,6 +1,6 @@
 import { IUnserialize } from 'discord-mel'
 
-import ActivityRankingRole from './ActivityRankingRole'
+import ActivityRankingRole from './ActivityRankingRole.js'
 
 class ActivityRankingRoles extends Array<ActivityRankingRole> implements IUnserialize
 {

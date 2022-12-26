@@ -1,8 +1,8 @@
 import { Discord, Mel } from 'discord-mel'
 
-import GiveawayRunResults from '../enums/GiveawayRunResults'
-import GiveawayData from '../state/types/Giveaway'
-import AbstractEntity from './AbstractEntity'
+import GiveawayRunResults from '../enums/GiveawayRunResults.js'
+import GiveawayData from '../state/types/Giveaway.js'
+import AbstractEntity from './AbstractEntity.js'
 
 class Giveaway extends AbstractEntity
 {
@@ -11,7 +11,7 @@ class Giveaway extends AbstractEntity
 
 	// public giveawayMessage: Discord.Message
 
-	public giveawayMessagePromise: Promise<Discord.Message>
+	public giveawayMessagePromise: Promise<Discord.Message<true>>
 
 	public constructor(bot: Mel, giveawayData: GiveawayData)
 	{
@@ -22,9 +22,12 @@ class Giveaway extends AbstractEntity
 			bot.client.channels.fetch(giveawayData.giveawayChannelId)
 				.then(channel =>
 					{
-						return channel?.isText()
-							? channel.messages.fetch(giveawayData.giveawayMessageId, { force: true })
-							: Promise.reject(new Error('Channel is not a text channel'))
+						if (channel instanceof Discord.GuildChannel && channel.isTextBased())
+						{
+							return channel.messages.fetch({ message: giveawayData.giveawayMessageId, force: true })
+						}
+
+						return Promise.reject(new Error('Channel is not a guild text channel'))
 					})
 				.catch(error =>
 					{

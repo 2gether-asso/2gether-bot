@@ -1,9 +1,9 @@
 import { AbstractDB } from 'discord-mel'
 
-import Activities from './types/Activities'
-import Guilds from './types/Guilds'
-import Giveaways from './types/Giveaways'
-import GiveawayStats from './types/GiveawayStats'
+import Activities from './types/Activities.js'
+import Guilds from './types/Guilds.js'
+import Giveaways from './types/Giveaways.js'
+import GiveawayStats from './types/GiveawayStats.js'
 
 class StateDB extends AbstractDB
 {

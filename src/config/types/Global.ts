@@ -1,4 +1,6 @@
-import { Global as BaseGlobal } from 'discord-mel/dist/config/AbstractConfig'
+import { config } from 'discord-mel'
+
+const BaseGlobal = config.Global
 
 class Global extends BaseGlobal
 {

@@ -2,10 +2,10 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, entersState, getVoiceConnection, joinVoiceChannel, NoSubscriberBehavior, PlayerSubscription, VoiceConnection, VoiceConnectionStatus } from '@discordjs/voice'
 import { Mel, Discord, MessageReactionListenerRegister, DBListener, ListenerTypes, MessageReactionHandler, MessageReactionListener, MessageComponentListenerRegister, MessageComponentHandler, MessageComponentListener } from 'discord-mel'
 import YTDL from 'ytdl-core'
-import Radio from '../state/types/Radio'
-import RadioLoopMode from '../state/types/RadioLoopMode'
 
-import AbstractCommand from './AbstractCommand'
+import AbstractCommand from './AbstractCommand.js'
+import Radio from '../state/types/Radio.js'
+import RadioLoopMode from '../state/types/RadioLoopMode.js'
 
 class MessageComponentListenerData
 {
@@ -380,7 +380,7 @@ class PlayCommand extends AbstractCommand
 		}
 	}
 
-	async onCommandInteraction(interaction: Discord.BaseCommandInteraction): Promise<void>
+	async onCommandInteraction(interaction: Discord.CommandInteraction): Promise<void>
 	{
 		if (!interaction.isCommand() || !interaction.guild || !interaction.channel || !(interaction.member instanceof Discord.GuildMember))
 		{
@@ -409,8 +409,9 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		const resourceUrl = interaction.options.getString('url')
-		if (resourceUrl)
+		// const resourceUrl = interaction.options.getString('url')
+		const resourceUrl = interaction.options.get('url')?.value
+		if (resourceUrl && typeof resourceUrl === 'string')
 		{
 			if (this.player) // s.size > 0) // this.isPlaying)
 			{
@@ -494,51 +495,51 @@ class PlayCommand extends AbstractCommand
 							{
 								content: null,
 								components: [
-									new Discord.MessageActionRow()
+									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
 										.setComponents(
-											new Discord.MessageButton()
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_PREVIOUS)
 												.setLabel(RadioControlEmojis.PREVIOUS)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_PLAY)
 												.setLabel(RadioControlEmojis.PLAY)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_PAUSE)
 												.setLabel(RadioControlEmojis.PAUSE)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_NEXT)
 												.setLabel(RadioControlEmojis.NEXT)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_LOOP_TOGGLE)
 												.setLabel(RadioControlEmojis.LOOP_TOGGLE)
-												.setStyle('SECONDARY'),
+												.setStyle(Discord.ButtonStyle.Secondary),
 										),
-									new Discord.MessageActionRow()
+									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
 										.setComponents(
-											new Discord.MessageButton()
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_CLEAR)
 												.setLabel(RadioControlEmojis.CLEAR)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_STOP)
 												.setLabel(RadioControlEmojis.STOP)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_MUTE)
 												.setLabel(RadioControlEmojis.MUTE)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_VOLUME_DOWN)
 												.setLabel(RadioControlEmojis.VOLUME_DOWN)
-												.setStyle('SECONDARY'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Secondary),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_VOLUME_UP)
 												.setLabel(RadioControlEmojis.VOLUME_UP)
-												.setStyle('SECONDARY'),
+												.setStyle(Discord.ButtonStyle.Secondary),
 										),
 								]
 							}))
@@ -618,7 +619,7 @@ class PlayCommand extends AbstractCommand
 		}
 
 		// const embed = new Discord.MessageEmbed(message.embeds[0])
-		const embed = new Discord.MessageEmbed()
+		const embed = new Discord.EmbedBuilder()
 		embed.spliceFields(0, 25) // Reset fields
 
 		// if (!dbComponentListener)
@@ -633,14 +634,17 @@ class PlayCommand extends AbstractCommand
 		embed.setTitle(dbRadio.embedTitle)
 		embed.setColor(dbRadio.embedColor)
 
-		// if (dbRadio.status) embed.addField('status', dbRadio.status, false)
-		embed.addField('Ajouter une musique', `\`/play url:<YouTube url>\``, false)
-		embed.addField('len(queue)', `${dbRadio.queue.length}`, true)
-		embed.addField('len(history)', `${dbRadio.history.length}`, true)
-		embed.addField('loopMode', `${dbRadio.loopMode}`, true)
-		embed.addField('volume', `${dbRadio.volume * 100} %`, true)
-		// embed.addField('queue', `:${dbRadio.queue.join(',')}`, false)
-		// embed.addField('lastPlayed', `${dbRadio.lastPlayed}`, false)
+		// if (dbRadio.status) embed.addFields({ name: 'status', value: dbRadio.status, inline: false })
+
+		embed.addFields(
+			{ name: 'Ajouter une musique', value: `\`/play url:<YouTube url>\``, inline: false },
+			{ name: 'len(queue)', value: `${dbRadio.queue.length}`, inline: true },
+			{ name: 'len(history)', value: `${dbRadio.history.length}`, inline: true },
+			{ name: 'loopMode', value: `${dbRadio.loopMode}`, inline: true },
+			{ name: 'volume', value: `${dbRadio.volume * 100} %`, inline: true },
+			// { name: 'queue', value: `:${dbRadio.queue.join(',')}`, inline: false },
+			// { name: 'lastPlayed', value: `${dbRadio.lastPlayed}`, inline: false },
+		)
 
 		const getTrackInfo = async (urls: string[], index: number) =>
 		{
@@ -752,10 +756,13 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		const connection = await this.getConnection(guild.me?.voice.channel ?? dbRadio.voiceChannelId)
+		// Note: guild.me does not exist
+		// const connection = await this.getConnection(guild.me?.voice.channel ?? dbRadio.voiceChannelId)
+		const connection = await this.getConnection(dbRadio.voiceChannelId)
 		if (!connection)
 		{
-			this.bot.logger.error(`playNext: No voice connection (channel: ${guild.me?.voice.channel?.id})`, 'PlayCommand')
+			// this.bot.logger.error(`playNext: No voice connection (channel: ${guild.me?.voice.channel?.id})`, 'PlayCommand')
+			this.bot.logger.error(`playNext: No voice connection (channel: ${dbRadio.voiceChannelId})`, 'PlayCommand')
 			return
 		}
 

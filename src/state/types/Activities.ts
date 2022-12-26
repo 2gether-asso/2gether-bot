@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types/v9'
 import { Discord } from 'discord-mel'
-import UserActivity from './UserActivity'
+import UserActivity from './UserActivity.js'
 
 class Activities
 {

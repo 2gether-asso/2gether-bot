@@ -1,6 +1,6 @@
 import { AbstractDBType } from 'discord-mel'
 
-import Radio from './Radio'
+import Radio from './Radio.js'
 
 class Guild extends AbstractDBType
 {

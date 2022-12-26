@@ -1,6 +1,6 @@
 import { AbstractDBType, Discord, ISerialize } from 'discord-mel'
 
-import RadioLoopMode from './RadioLoopMode'
+import RadioLoopMode from './RadioLoopMode.js'
 
 class Radio extends AbstractDBType
 {
@@ -58,7 +58,7 @@ class Radio extends AbstractDBType
         this.messageId = undefined
         this.embedMessageId = undefined
         this.embedTitle = 'Radio'
-        this.embedColor = 'RANDOM'
+        this.embedColor = 'Random'
     }
 }
 

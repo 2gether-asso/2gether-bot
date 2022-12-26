@@ -1,6 +1,6 @@
 import { DBListener, Discord, ListenerTypes, Mel, MessageReactionHandler, MessageReactionListener, MessageReactionListenerRegister } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
+import AbstractCommand from './AbstractCommand.js'
 
 class ActivityRankCommand extends AbstractCommand
 {
@@ -38,7 +38,7 @@ class ActivityRankCommand extends AbstractCommand
 		// Configuration
 		const pageSize = 2; // max 25
 
-		const embed = new Discord.MessageEmbed()
+		const embed = new Discord.EmbedBuilder()
 			.setColor('#ff9933')
 			.setTitle(`Classement de l'activité des membres`)
 			.setDescription(`_Chargement..._`);
@@ -66,7 +66,7 @@ class ActivityRankCommand extends AbstractCommand
 							})
 					)
 					.then(listener => this.updateEmbed(answer, listener.getDbListener()))
-					.then((updatedEmbed: Discord.MessageEmbed) => answer.edit({ embeds: [updatedEmbed] }))
+					.then((updatedEmbed: Discord.EmbedBuilder) => answer.edit({ embeds: [updatedEmbed] }))
 					.catch(e => this.bot.logger.error(`${this.name}:${message.id}`, e));
 
 				// React with emojis in order
@@ -79,9 +79,9 @@ class ActivityRankCommand extends AbstractCommand
 			.catch(console.error)
 	}
 
-	protected async updateEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined): Promise<Discord.MessageEmbed>
+	protected async updateEmbed(message: Discord.Message, dbReactionListener: DBListener | undefined): Promise<Discord.EmbedBuilder>
 	{
-		const embed = new Discord.MessageEmbed(message.embeds[0])
+		const embed = Discord.EmbedBuilder.from(message.embeds[0])
 		if (!message.guild)
 		{
 			// No guild
@@ -163,7 +163,7 @@ class ActivityRankCommand extends AbstractCommand
 			}
 
 			// const score = this.state.db.activities.users[this.state.db.activities.ranking[i]].score;
-			embed.addField(`#${i + 1}`, content);
+			embed.addFields({ name: `#${i + 1}`, value: content });
 		}
 
 		return embed;

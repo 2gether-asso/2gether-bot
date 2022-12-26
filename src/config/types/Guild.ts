@@ -1,5 +1,8 @@
-import { Guild as BaseGuild } from 'discord-mel/dist/config/AbstractConfig'
-import Activity from './Activity'
+import { config } from 'discord-mel'
+
+import Activity from './Activity.js'
+
+const BaseGuild = config.Guild
 
 class Guild extends BaseGuild
 {

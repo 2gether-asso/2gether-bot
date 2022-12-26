@@ -1,6 +1,6 @@
 import { AbstractConfig } from 'discord-mel'
-import Global from './types/Global'
-import Guild from './types/Guild'
+import Global from './types/Global.js'
+import Guild from './types/Guild.js'
 
 class Config extends AbstractConfig
 {

@@ -1,9 +1,9 @@
 import { Mel, Discord } from 'discord-mel'
 
-import Config from '../config/Config'
-import Activity from '../config/types/Activity'
-import State from '../state/State'
-import { UserActivityCooldown } from '../state/types/UserActivity'
+import Config from '../config/Config.js'
+import Activity from '../config/types/Activity.js'
+import State from '../state/State.js'
+import { UserActivityCooldown } from '../state/types/UserActivity.js'
 
 class ActivityHooks
 {

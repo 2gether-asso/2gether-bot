@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types/v9'
 import { AbstractDBMapType } from 'discord-mel'
 
-import Giveaway from './Giveaway'
+import Giveaway from './Giveaway.js'
 
 class Giveaways extends AbstractDBMapType<Snowflake, Giveaway>
 {

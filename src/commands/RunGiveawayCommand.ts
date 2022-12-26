@@ -2,9 +2,9 @@ import { ApplicationCommandType } from 'discord-api-types/v9'
 import { ContextMenuCommandBuilder } from '@discordjs/builders'
 import { Mel, Discord } from 'discord-mel'
 
-import AbstractCommand from './AbstractCommand'
-import Giveaway from '../entities/Giveaway'
-import GiveawayRunResults from '../enums/GiveawayRunResults'
+import AbstractCommand from './AbstractCommand.js'
+import Giveaway from '../entities/Giveaway.js'
+import GiveawayRunResults from '../enums/GiveawayRunResults.js'
 
 type ComponentId = `${string}:${string}`
 
@@ -25,7 +25,7 @@ class RunGiveawayCommand extends AbstractCommand
 		this.description = 'Execute le tirage au sort.'
 
 		this.guildOnly = true
-		this.permissions.add('ADMINISTRATOR')
+		this.permissions.add(Discord.PermissionFlagsBits.Administrator)
 
 		// Legacy commands aliases
 		// this.commandAliases.add('rungiveaway')
@@ -81,9 +81,9 @@ class RunGiveawayCommand extends AbstractCommand
 		// }
 	}
 
-	public async onCommandInteraction(interaction: Discord.BaseCommandInteraction)
+	public async onCommandInteraction(interaction: Discord.CommandInteraction)
 	{
-		if (!interaction.isContextMenu())
+		if (!interaction.isContextMenuCommand())
 		{
 			return
 		}
@@ -197,8 +197,9 @@ class RunGiveawayCommand extends AbstractCommand
 
 		if (giveaway)
 		{
+			this.bot.logger.debug(`Confirmed`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Winners have been confimed!`,
+					content: `Les gagnants sont confimés.`,
 					components: [],
 				})
 
@@ -225,8 +226,9 @@ class RunGiveawayCommand extends AbstractCommand
 			// Clear the giveaway winners
 			giveaway.clearWinners()
 
+			this.bot.logger.debug(`Redrawing`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Winners have been redrawn!`,
+					content: `Les gagnants sont retirés au sort.`,
 					components: [],
 				})
 				.then(() =>
@@ -257,8 +259,9 @@ class RunGiveawayCommand extends AbstractCommand
 			// Reset the giveaway reaction emoji
 			giveaway.setReactionEmoji(undefined)
 
+			this.bot.logger.debug(`Reset`, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 			interaction.update({
-					content: `Reaction emoji has been resetted!`,
+					content: `Le giveaway est réinitialisé.`,
 					components: [],
 				})
 				.then(() =>
@@ -269,7 +272,7 @@ class RunGiveawayCommand extends AbstractCommand
 		}
 	}
 
-	protected async runGiveaway(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction, doFollowUp: boolean = false)
+	protected async runGiveaway(giveaway: Giveaway, interaction: Discord.CommandInteraction | Discord.MessageComponentInteraction, doFollowUp: boolean = false)
 	{
 		return giveaway.run()
 			.then(result =>
@@ -282,11 +285,11 @@ class RunGiveawayCommand extends AbstractCommand
 									const replyOptions: Discord.InteractionReplyOptions & { fetchReply: true } = {
 											content: 'Quelle reaction est liée au giveaway ?',
 											components: [
-												new Discord.MessageActionRow()
+												new Discord.ActionRowBuilder<Discord.StringSelectMenuBuilder>()
 													.addComponents(
-														new Discord.MessageSelectMenu()
+														new Discord.StringSelectMenuBuilder()
 															.setCustomId(this.COMPONENT_SELECT_EMOJI)
-															.setPlaceholder('Nothing selected')
+															.setPlaceholder('Aucune sélection')
 															.addOptions(
 																allReactions.map((reaction, key) =>
 																	({
@@ -337,21 +340,21 @@ class RunGiveawayCommand extends AbstractCommand
 						const replyOptions: Discord.InteractionReplyOptions & { fetchReply: true } = {
 								content: content,
 								components: [
-									new Discord.MessageActionRow()
+									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
 										.addComponents(
-											new Discord.MessageButton()
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_CONFIRM_WINNER)
 												.setLabel('Confirmer')
-												.setStyle('SUCCESS'),
-											new Discord.MessageButton()
+												.setStyle(Discord.ButtonStyle.Success),
+											new Discord.ButtonBuilder()
 												.setCustomId(this.COMPONENT_REDRAW_WINNER)
 												.setLabel('Retirer au sort')
-												.setStyle('DANGER'),
+												.setStyle(Discord.ButtonStyle.Danger),
 											...(giveaway.giveawayData.reactionEmoji
-													? [new Discord.MessageButton()
+													? [new Discord.ButtonBuilder()
 														.setCustomId(this.COMPONENT_RESET_REACTION)
 														.setLabel('Sélectionner une autre réaction')
-														.setStyle('DANGER')]
+														.setStyle(Discord.ButtonStyle.Danger)]
 													: []
 												),
 										)
@@ -369,7 +372,7 @@ class RunGiveawayCommand extends AbstractCommand
 								giveaway.setContextMessageId(reply.id)
 							})
 
-						this.bot.logger.debug('Prompt to confirm winners', `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
+						this.bot.logger.debug('Prompt to confirm', `${this.name}:${giveaway.giveawayData.giveawayMessageId}`)
 					}
 
 					return result
@@ -386,7 +389,7 @@ class RunGiveawayCommand extends AbstractCommand
 				})
 	}
 
-	protected async announceWinner(giveaway: Giveaway, interaction: Discord.BaseCommandInteraction | Discord.MessageComponentInteraction): Promise<void>
+	protected async announceWinner(giveaway: Giveaway, interaction: Discord.CommandInteraction | Discord.MessageComponentInteraction): Promise<void>
 	{
 		if (!interaction.channel)
 		{
@@ -405,15 +408,11 @@ class RunGiveawayCommand extends AbstractCommand
 
 		if (winners.length <= 0)
 		{
-			interaction.reply({
-					content: `There was no participants on this giveaway.`,
-					ephemeral: true,
-				})
-
 			content += ` Il n'y a malheureusement eu aucun participant 😅`
 
 			// Announce the lack of a winnner
-			interaction.channel.send({ content,
+			interaction.channel.send({
+					content,
 					reply: { messageReference: giveaway.giveawayData.giveawayMessageId },
 				})
 				.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
@@ -423,7 +422,7 @@ class RunGiveawayCommand extends AbstractCommand
 			const winnersStr = winners.map(winner => `<@${winner}>`).join(`\n`)
 			content += ` Bravo ${winners.length > 1 ? 'aux gagnants' : 'au gagnant'} !\n${winnersStr}`
 
-			const embed = new Discord.MessageEmbed()
+			const embed = new Discord.EmbedBuilder()
 			embed.setTitle(giveawayData.title)
 			if (giveawayData.description)
 			{
@@ -433,10 +432,10 @@ class RunGiveawayCommand extends AbstractCommand
 			{
 				embed.setColor(giveawayData.color)
 			}
-			embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
+			embed.addFields({ name: winners.length > 1 ? 'Gagnants' : 'Gagnant', value: winnersStr })
 			if (interaction.user)
 			{
-				embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${interaction.user} !`)
+				embed.addFields({ name: 'Pour récupérer votre cadeau :', value: `Envoyez un message privé à ${interaction.user} !` })
 			}
 			embed.setFooter({
 					text: giveawayData.participants.length > 1
@@ -473,101 +472,6 @@ class RunGiveawayCommand extends AbstractCommand
 				.catch(error => this.bot.logger.warn(error, `${this.name}:${giveaway.giveawayData.giveawayMessageId}`))
 		}
 	}
-
-	// /**
-	//  *
-	//  * @param {Discord.Message} repliedTo
-	//  * @param {Discord.TextBasedChannel} channel
-	//  * @param {Discord.User} author
-	//  */
-	// async execute(repliedTo: Discord.Message,
-	//               channel: Discord.TextBasedChannel,
-	//               author: Discord.User,
-	// 			  reaction?: Discord.MessageReaction)
-	// {
-	// 	const options = {
-	// 		title: 'Une chance sur deux !',
-	// 		description: 'Résultats du tirage au sort.',
-	// 		color: '#4080c0',
-	// 		nbWinners: 1,
-	// 	}
-
-	// 	const participants =
-	// 		await reaction?.users.fetch()
-	// 			.then(users => users.filter(user => !user.bot))
-	// 			.catch(() => undefined)
-	// 		|| new Discord.Collection<string, Discord.User>()
-
-	// 	this.bot.logger.debug(`Trying to draw ${options.nbWinners} winners`, `${this.name}:${repliedTo.id}`)
-	// 	const winners = participants.random(options.nbWinners)
-	// 	this.bot.logger.info(`${winners.length} winners out of ${participants.size} participants`, `${this.name}:${repliedTo.id}`)
-
-	// 	let content = `Le giveaway`
-	// 	if (channel.lastMessageId !== repliedTo.id)
-	// 		content += ` **${options.title}**`
-	// 	content += ` vient de se terminer`
-
-	// 	if (winners.length > 0)
-	// 	{
-	// 		const winnersStr = winners.join(`\n`);
-
-	// 		content += ` ! Bravo ${winners.length > 1 ? 'aux gagnants' : 'au gagnant'} !\n${winnersStr}`
-
-	// 		const embed = new Discord.MessageEmbed()
-	// 		embed.setTitle(options.title)
-	// 		if (options.description)
-	// 			embed.setDescription(options.description)
-	// 		if (options.color)
-	// 			embed.setColor(options.color as Discord.HexColorString)
-	// 		embed.addField(winners.length > 1 ? 'Gagnants' : 'Gagnant', winnersStr)
-	// 		if (author)
-	// 			embed.addField('Pour récupérer votre cadeau :', `Envoyez un message privé à ${author} !`)
-	// 		embed.setFooter({
-	// 				text: participants.size > 1
-	// 					? `Merci aux ${participants.size} participants !`
-	// 					: `Merci à l'unique participant !`
-	// 					,
-	// 			})
-
-	// 		// Announce the giveaway winner!
-	// 		channel.send({ content,
-	// 				embeds: [embed],
-	// 				reply: { messageReference: repliedTo.id }
-	// 			})
-	// 			.then(() =>
-	// 				{
-	// 					this.state.setState(db =>
-	// 					{
-	// 						participants.forEach(participant =>
-	// 							{
-	// 								// Save participations
-	// 								const participations = (db.giveawayStats.participations[participant.id] || 0) + 1
-	// 								db.giveawayStats.participations[participant.id] = participations
-	// 								this.bot.logger.debug(`${participant.username} now has ${participations} participations`, `${this.name}:${repliedTo.id}`)
-	// 							})
-
-	// 						winners.forEach(winner =>
-	// 							{
-	// 								// Save wins
-	// 								const wins = (db.giveawayStats.wins[winner.id] || 0) + 1
-	// 								db.giveawayStats.wins[winner.id] = wins
-	// 								this.bot.logger.debug(`${winner.username} now has ${wins} wins`, `${this.name}:${repliedTo.id}`)
-	// 							})
-	// 					})
-	// 				})
-	// 			.catch(error => this.bot.logger.warn(error, `${this.name}:${repliedTo.id}`))
-	// 	}
-	// 	else
-	// 	{
-	// 		content += `, et il n'y a malheureusement eu aucun participant 😅`
-
-	// 		// Announce the lack of a winnner
-	// 		channel.send({ content,
-	// 				reply: { messageReference: repliedTo.id }
-	// 			})
-	// 			.catch(error => this.bot.logger.warn(error, `${this.name}:${repliedTo.id}`))
-	// 	}
-	// }
 }
 
 export default RunGiveawayCommand
