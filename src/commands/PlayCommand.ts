@@ -932,10 +932,10 @@ class PlayCommand extends AbstractCommand
 
 	protected async componentClearHandler(dbRadio: Radio)
 	{
-		// Clear the queue and history, leaving only the last played track
+		// Clear the queue and history
+		// If playing, leave the playing track in the history, otherwise clear it entirely
 		dbRadio.queue = []
-		dbRadio.history = dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
-		// this.updateMessageEmbed(listener, listener.getDbListener(), dbRadio)
+		dbRadio.history = this.player && dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
 	}
 
 	protected async componentStopHandler(dbRadio: Radio)
