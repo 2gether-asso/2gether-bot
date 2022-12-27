@@ -4,7 +4,7 @@ import { Mel, Discord, MessageReactionListenerRegister, DBListener, ListenerType
 import YTDL from 'ytdl-core'
 
 import AbstractCommand from './AbstractCommand.js'
-import Radio from '../state/types/Radio.js'
+import Radio from '../entities/Radio.js'
 import RadioLoopMode from '../state/types/RadioLoopMode.js'
 
 class MessageComponentListenerData
@@ -219,7 +219,7 @@ class PlayCommand extends AbstractCommand
 	}
 
 	// protected getPlayer(listener: MessageComponentListener): AudioPlayer
-	protected getPlayer(dbRadio: Radio): AudioPlayer
+	protected getPlayer(radio: Radio): AudioPlayer
 	{
 		if (this.player)
 		{
@@ -254,11 +254,11 @@ class PlayCommand extends AbstractCommand
 			this.bot.logger.debug('Audio player is in the Playing state!', 'PlayCommand') //, oldState, newState)
 
 			// Fix volume to the current value
-			this.setVolume(dbRadio)
+			this.setVolume(radio)
 
 			// // Handle loop modes
-			// if (dbRadio.loopMode === 'single') dbRadio.queue.unshift(next);
-			// else if (dbRadio.loopMode === 'queue') dbRadio.queue.push(next);
+			// if (radio.data.loopMode === 'single') radio.data.queue.unshift(next);
+			// else if (radio.data.loopMode === 'queue') radio.data.queue.push(next);
 			// // else, the track is just removed from the queue
 
 			// this.isPlaying = true;
@@ -273,7 +273,7 @@ class PlayCommand extends AbstractCommand
 				{
 					if (this.player && this.player.state.status === AudioPlayerStatus.Playing)
 					{
-						this.updateMessageEmbed(dbRadio)
+						this.updateMessageEmbed(radio)
 							.then(() =>
 								{
 									// Try to update the player embed again later
@@ -300,7 +300,7 @@ class PlayCommand extends AbstractCommand
 			}
 
 			// Update the player embed
-			this.updateMessageEmbed(dbRadio)
+			this.updateMessageEmbed(radio)
 		});
 
 		player.on(AudioPlayerStatus.AutoPaused, (oldState, newState) => {
@@ -312,7 +312,7 @@ class PlayCommand extends AbstractCommand
 			}
 
 			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
+			this.updateMessageEmbed(radio)
 		});
 
 		player.on(AudioPlayerStatus.Paused, (oldState, newState) => {
@@ -324,7 +324,7 @@ class PlayCommand extends AbstractCommand
 			}
 
 			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
+			this.updateMessageEmbed(radio)
 		});
 
 		player.on(AudioPlayerStatus.Idle, (oldState, newState) => {
@@ -341,10 +341,10 @@ class PlayCommand extends AbstractCommand
 			}
 
 			// Update the status embed
-			this.updateMessageEmbed(dbRadio)
+			this.updateMessageEmbed(radio)
 
 			// Try to play the next track
-			this.playNext(dbRadio)
+			this.playNext(radio)
 		});
 
 		// this.players.set(listener.id, player)
@@ -388,7 +388,7 @@ class PlayCommand extends AbstractCommand
 		}
 
 		const guild = interaction.guild
-		const dbRadio = this.state.db.guilds.getGuild(guild).radio
+		const radio = this.state.db.guilds.getGuild(guild).radio.getEntity(this.bot)
 
 		const voiceChannel = interaction.member.voice.channel
 		if (!voiceChannel)
@@ -417,7 +417,7 @@ class PlayCommand extends AbstractCommand
 			{
 				// Add track to the queue
 				this.bot.logger.debug(`Push track to the queue: ${resourceUrl}`, 'PlayCommand')
-				dbRadio.queue.push(resourceUrl)
+				radio.data.queue.push(resourceUrl)
 
 				// YTDL.getInfo(resourceUrl)
 				// 	.then(info =>
@@ -432,7 +432,7 @@ class PlayCommand extends AbstractCommand
 			{
 				// Add track to play now
 				this.bot.logger.debug(`Unshift track to the queue: ${resourceUrl}`, 'PlayCommand')
-				dbRadio.queue.unshift(resourceUrl)
+				radio.data.queue.unshift(resourceUrl)
 			}
 		}
 
@@ -464,9 +464,9 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		// if (dbRadio.listenerId)
+		// if (radio.data.listenerId)
 		// {
-		// 	this.bot.listeners.delete(dbRadio.listenerId)
+		// 	this.bot.listeners.delete(radio.data.listenerId)
 		// }
 
 		interaction.deferReply()
@@ -478,18 +478,18 @@ class PlayCommand extends AbstractCommand
 			.then(message =>
 				{
 					// Configure the radio
-					dbRadio.volume = 0.5
-					dbRadio.embedMessageId = message.id
-					dbRadio.authorId = interaction.user.id
-					dbRadio.guildId = guild.id
-					dbRadio.voiceChannelId = voiceChannel.id
-					dbRadio.messageChannelId = message.channel.id
-					dbRadio.messageId = message.id
-					dbRadio.embedTitle = '📻 🎶  2GETHER Radio'
-					dbRadio.embedColor = '#0099ff'
+					radio.data.volume = 0.5
+					radio.data.embedMessageId = message.id
+					radio.data.authorId = interaction.user.id
+					radio.data.guildId = guild.id
+					radio.data.voiceChannelId = voiceChannel.id
+					radio.data.messageChannelId = message.channel.id
+					radio.data.messageId = message.id
+					radio.data.embedTitle = '📻 🎶  2GETHER Radio'
+					radio.data.embedColor = '#0099ff'
 
 					// Inform the user that the message listener has been created
-					return this.updateMessageEmbed(dbRadio, message)
+					return this.updateMessageEmbed(radio, message)
 						// .then(updatedMessage => updatedMessage.edit({ content: null }))
 						.then(updatedMessage => updatedMessage.edit(
 							{
@@ -546,7 +546,7 @@ class PlayCommand extends AbstractCommand
 						.then(_ =>
 							{
 								// Play the next track, if any
-								return this.playNext(dbRadio)
+								return this.playNext(radio)
 							})
 				})
 			.then(() => interaction.editReply({ content: 'C\'est bon !' })) // ephemeral: true
@@ -567,19 +567,19 @@ class PlayCommand extends AbstractCommand
 		interaction.deferUpdate()
 
 		// const data = dbListener.data as MessageComponentListenerData
-		const dbRadio = this.state.db.guilds.getGuild(interaction.guild).radio
+		const radio = this.state.db.guilds.getGuild(interaction.guild).radio.getEntity(this.bot)
 
 		const componentsHandlers = new Map<string, () => Promise<void>>()
-			.set(this.COMPONENT_PLAY, this.componentPlayHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_PAUSE, this.componentPauseHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_PREVIOUS, this.componentPreviousHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_NEXT, this.componentNextHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_LOOP_TOGGLE, this.componentLoopToggleHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_CLEAR, this.componentClearHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_STOP, this.componentStopHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_MUTE, this.componentMuteHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_VOLUME_DOWN, this.componentVolumeDownHandler.bind(this, dbRadio))
-			.set(this.COMPONENT_VOLUME_UP, this.componentVolumeUpHandler.bind(this, dbRadio))
+			.set(this.COMPONENT_PLAY, this.componentPlayHandler.bind(this, radio))
+			.set(this.COMPONENT_PAUSE, this.componentPauseHandler.bind(this, radio))
+			.set(this.COMPONENT_PREVIOUS, this.componentPreviousHandler.bind(this, radio))
+			.set(this.COMPONENT_NEXT, this.componentNextHandler.bind(this, radio))
+			.set(this.COMPONENT_LOOP_TOGGLE, this.componentLoopToggleHandler.bind(this, radio))
+			.set(this.COMPONENT_CLEAR, this.componentClearHandler.bind(this, radio))
+			.set(this.COMPONENT_STOP, this.componentStopHandler.bind(this, radio))
+			.set(this.COMPONENT_MUTE, this.componentMuteHandler.bind(this, radio))
+			.set(this.COMPONENT_VOLUME_DOWN, this.componentVolumeDownHandler.bind(this, radio))
+			.set(this.COMPONENT_VOLUME_UP, this.componentVolumeUpHandler.bind(this, radio))
 
 		const componentsHandler = componentsHandlers.get(interaction.customId)
 		if (!componentsHandler)
@@ -591,23 +591,23 @@ class PlayCommand extends AbstractCommand
 		componentsHandler()
 			.then(() =>
 				{
-					this.updateMessageEmbed(dbRadio)
+					this.updateMessageEmbed(radio)
 						// .then(() => interaction.update({}))
 				})
 	}
 
-	// protected async updateMessageEmbed(message: Discord.Message, dbComponentListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
-	// protected async updateMessageEmbed(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, dbRadio: Radio): Promise<Discord.Message>
-	protected async updateMessageEmbed(dbRadio: Radio, message?: Discord.Message): Promise<Discord.Message>
+	// protected async updateMessageEmbed(message: Discord.Message, dbComponentListener: DBListener | undefined, radio: Radio): Promise<Discord.Message>
+	// protected async updateMessageEmbed(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, radio: Radio): Promise<Discord.Message>
+	protected async updateMessageEmbed(radio: Radio, message?: Discord.Message): Promise<Discord.Message>
 	{
 		if (!message)
 		{
-			if (dbRadio.messageChannelId && dbRadio.messageId)
+			if (radio.data.messageChannelId && radio.data.messageId)
 			{
-				const channel = await this.bot.client.channels.fetch(dbRadio.messageChannelId)
+				const channel = await this.bot.client.channels.fetch(radio.data.messageChannelId)
 				if (channel instanceof Discord.TextChannel)
 				{
-					message = await channel.messages.fetch(dbRadio.messageId)
+					message = await channel.messages.fetch(radio.data.messageId)
 				}
 			}
 
@@ -631,19 +631,19 @@ class PlayCommand extends AbstractCommand
 		// else
 		// {
 		// 	const data = dbComponentListener.data as MessageComponentListenerData
-		embed.setTitle(dbRadio.embedTitle)
-		embed.setColor(dbRadio.embedColor)
+		embed.setTitle(radio.data.embedTitle)
+		embed.setColor(radio.data.embedColor)
 
-		// if (dbRadio.status) embed.addFields({ name: 'status', value: dbRadio.status, inline: false })
+		// if (radio.data.status) embed.addFields({ name: 'status', value: radio.data.status, inline: false })
 
 		embed.addFields(
 			{ name: 'Ajouter une musique', value: `\`/play url:<YouTube url>\``, inline: false },
-			{ name: 'len(queue)', value: `${dbRadio.queue.length}`, inline: true },
-			{ name: 'len(history)', value: `${dbRadio.history.length}`, inline: true },
-			{ name: 'loopMode', value: `${dbRadio.loopMode}`, inline: true },
-			{ name: 'volume', value: `${dbRadio.volume * 100} %`, inline: true },
-			// { name: 'queue', value: `:${dbRadio.queue.join(',')}`, inline: false },
-			// { name: 'lastPlayed', value: `${dbRadio.lastPlayed}`, inline: false },
+			{ name: 'len(queue)', value: `${radio.data.queue.length}`, inline: true },
+			{ name: 'len(history)', value: `${radio.data.history.length}`, inline: true },
+			{ name: 'loopMode', value: `${radio.data.loopMode}`, inline: true },
+			{ name: 'volume', value: `${radio.data.volume * 100} %`, inline: true },
+			// { name: 'queue', value: `:${radio.data.queue.join(',')}`, inline: false },
+			// { name: 'lastPlayed', value: `${radio.data.lastPlayed}`, inline: false },
 		)
 
 		const getTrackInfo = async (urls: string[], index: number) =>
@@ -664,7 +664,7 @@ class PlayCommand extends AbstractCommand
 			return undefined
 		}
 
-		const nextTrackInfo = await getTrackInfo(dbRadio.queue, 0)
+		const nextTrackInfo = await getTrackInfo(radio.data.queue, 0)
 		const nextTrackTitle = nextTrackInfo ? `\n\n⏭️  \`${nextTrackInfo.videoDetails.title}\`` : ''
 
 		// const player = this.players.get(listener.id)
@@ -675,7 +675,7 @@ class PlayCommand extends AbstractCommand
 				? '▶️' // Play icon
 				: '⏸' // Pause icon
 
-			const currentTrackInfo = await getTrackInfo(dbRadio.history, dbRadio.history.length - 1)
+			const currentTrackInfo = await getTrackInfo(radio.data.history, radio.data.history.length - 1)
 			const currentTrackTitle = currentTrackInfo
 				? `${status}  \`${currentTrackInfo.videoDetails.title}\``
 				: `${status}  _Pas d'information_`
@@ -714,8 +714,8 @@ class PlayCommand extends AbstractCommand
 		return message.edit({ embeds: [ embed ] })
 	}
 
-	// // protected updateMessageEmbedStatus(message: Discord.Message, dbComponentListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
-	// protected async updateMessageEmbedStatus(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, dbRadio: Radio, status: string): Promise<Discord.Message>
+	// // protected updateMessageEmbedStatus(message: Discord.Message, dbComponentListener: DBListener | undefined, radio: Radio, status: string): Promise<Discord.Message>
+	// protected async updateMessageEmbedStatus(listener: MessageComponentListener, dbComponentListener: DBListener | undefined, radio: Radio, status: string): Promise<Discord.Message>
 	// {
 	// 	if (dbComponentListener)
 	// 	{
@@ -723,7 +723,7 @@ class PlayCommand extends AbstractCommand
 	// 		this.state.save()
 	// 	}
 
-	// 	return this.updateMessageEmbed(listener, dbComponentListener, dbRadio)
+	// 	return this.updateMessageEmbed(listener, dbComponentListener, radio)
 	// }
 
 	protected secondsToStr(seconds: number)
@@ -743,13 +743,11 @@ class PlayCommand extends AbstractCommand
 		else return `${seconds}s`;
 	}
 
-	// protected async playNext(_connection: VoiceConnection | undefined, listener: MessageComponentListener, _dbRadio?: Radio): Promise<void>
-	protected async playNext(_dbRadio: Radio): Promise<void>
+	// protected async playNext(_connection: VoiceConnection | undefined, listener: MessageComponentListener, _radio?: Radio): Promise<void>
+	protected async playNext(radio: Radio): Promise<void>
 	{
-		const dbRadio = _dbRadio
-
 		// const guild = listener.message.guild
-		const guild = dbRadio.guildId ? await this.bot.client.guilds.fetch(dbRadio.guildId) : undefined
+		const guild = radio.data.guildId ? await this.bot.client.guilds.fetch(radio.data.guildId) : undefined
 		if (!guild)
 		{
 			this.bot.logger.debug('playNext: No guild', 'PlayCommand')
@@ -757,23 +755,23 @@ class PlayCommand extends AbstractCommand
 		}
 
 		// Note: guild.me does not exist
-		// const connection = await this.getConnection(guild.me?.voice.channel ?? dbRadio.voiceChannelId)
-		const connection = await this.getConnection(dbRadio.voiceChannelId)
+		// const connection = await this.getConnection(guild.me?.voice.channel ?? radio.data.voiceChannelId)
+		const connection = await this.getConnection(radio.data.voiceChannelId)
 		if (!connection)
 		{
 			// this.bot.logger.error(`playNext: No voice connection (channel: ${guild.me?.voice.channel?.id})`, 'PlayCommand')
-			this.bot.logger.error(`playNext: No voice connection (channel: ${dbRadio.voiceChannelId})`, 'PlayCommand')
+			this.bot.logger.error(`playNext: No voice connection (channel: ${radio.data.voiceChannelId})`, 'PlayCommand')
 			return
 		}
 
-		// const dbRadio = _dbRadio ?? this.state.db.guilds.getGuild(guild).radio
+		// const radio = _radio ?? this.state.db.guilds.getGuild(guild).radio
 
 		this.bot.logger.debug('playNext', 'PlayCommand')
 
 		const hadPlayer = this.player !== undefined // s.has(listener.id)
 
 		// Unqueue the next track to play
-		const nextTrack = dbRadio.queue.shift()
+		const nextTrack = radio.data.queue.shift()
 		if (!nextTrack)
 		{
 			// Nothing next to play
@@ -791,7 +789,7 @@ class PlayCommand extends AbstractCommand
 		}
 
 		// Push the track to play in history
-		dbRadio.history.push(nextTrack)
+		radio.data.history.push(nextTrack)
 
 		// Save changes to the queue
 		this.state.save()
@@ -825,7 +823,7 @@ class PlayCommand extends AbstractCommand
 			connection.rejoin()
 		}
 
-		const player = this.getPlayer(dbRadio)
+		const player = this.getPlayer(radio)
 		this.playerSubscription = connection.subscribe(player)
 		// this.playerSubscription?.connection.on()
 		// this.playerSubscription?.player.on()
@@ -833,8 +831,8 @@ class PlayCommand extends AbstractCommand
 		player.play(resource)
 	}
 
-	// protected async setVolume(listener: MessageComponentListener, dbRadio: Radio, volume: number): Promise<void>
-	protected async setVolume(dbRadio: Radio, volume?: number): Promise<void>
+	// protected async setVolume(listener: MessageComponentListener, radio: Radio, volume: number): Promise<void>
+	protected async setVolume(radio: Radio, volume?: number): Promise<void>
 	{
 		if (!this.playerSubscription)
 		{
@@ -869,28 +867,28 @@ class PlayCommand extends AbstractCommand
 			}
 			else
 			{
-				volume = dbRadio.volume
+				volume = radio.data.volume
 			}
 
 			state.resource.volume.setVolumeLogarithmic(volume)
-			dbRadio.volume = volume
+			radio.data.volume = volume
 			return
 		}
 
 		this.bot.logger.debug(`setVolume: Not playing`, 'PlayCommand')
 	}
 
-	protected async componentPlayHandler(dbRadio: Radio)
+	protected async componentPlayHandler(radio: Radio)
 	{
-		this.player ? this.player.unpause() : this.playNext(dbRadio)
+		this.player ? this.player.unpause() : this.playNext(radio)
 	}
 
-	protected async componentPauseHandler(dbRadio: Radio)
+	protected async componentPauseHandler(radio: Radio)
 	{
 		this.player && this.player.pause()
 	}
 
-	protected async componentPreviousHandler(dbRadio: Radio)
+	protected async componentPreviousHandler(radio: Radio)
 	{
 		// Pop the history twice if a track is currently playing (the first popped track is the current track)
 		const popCount = this.player ? 2 : 1
@@ -898,64 +896,64 @@ class PlayCommand extends AbstractCommand
 		// Pop the history and add the popped tracks to the queue
 		for (let i = 0; i < popCount; ++i)
 		{
-			if (dbRadio.history.length > 0)
+			if (radio.data.history.length > 0)
 			{
-				const track = dbRadio.history.pop()
-				track && dbRadio.queue.unshift(track)
+				const track = radio.data.history.pop()
+				track && radio.data.queue.unshift(track)
 			}
 		}
 
 		// Then, play the previous track as the next track
-		this.playNext(dbRadio)
+		this.playNext(radio)
 	}
 
-	protected async componentNextHandler(dbRadio: Radio)
+	protected async componentNextHandler(radio: Radio)
 	{
-		this.playNext(dbRadio)
+		this.playNext(radio)
 	}
 
-	protected async componentLoopToggleHandler(dbRadio: Radio)
+	protected async componentLoopToggleHandler(radio: Radio)
 	{
-		if (dbRadio.loopMode === RadioLoopMode.NONE)
+		if (radio.data.loopMode === RadioLoopMode.NONE)
 		{
-			dbRadio.loopMode = RadioLoopMode.QUEUE
+			radio.data.loopMode = RadioLoopMode.QUEUE
 		}
-		else if (dbRadio.loopMode === RadioLoopMode.QUEUE)
+		else if (radio.data.loopMode === RadioLoopMode.QUEUE)
 		{
-			dbRadio.loopMode = RadioLoopMode.SINGLE
+			radio.data.loopMode = RadioLoopMode.SINGLE
 		}
 		else
 		{
-			dbRadio.loopMode = RadioLoopMode.NONE
+			radio.data.loopMode = RadioLoopMode.NONE
 		}
 	}
 
-	protected async componentClearHandler(dbRadio: Radio)
+	protected async componentClearHandler(radio: Radio)
 	{
 		// Clear the queue and history
 		// If playing, leave the playing track in the history, otherwise clear it entirely
-		dbRadio.queue = []
-		dbRadio.history = this.player && dbRadio.history.length > 0 ? [dbRadio.history[dbRadio.history.length - 1]] : []
+		radio.data.queue = []
+		radio.data.history = this.player && radio.data.history.length > 0 ? [radio.data.history[radio.data.history.length - 1]] : []
 	}
 
-	protected async componentStopHandler(dbRadio: Radio)
+	protected async componentStopHandler(radio: Radio)
 	{
 		this.stopPlayer()
 	}
 
-	protected async componentMuteHandler(dbRadio: Radio)
+	protected async componentMuteHandler(radio: Radio)
 	{
-		return this.setVolume(dbRadio, 0)
+		return this.setVolume(radio, 0)
 	}
 
-	protected async componentVolumeDownHandler(dbRadio: Radio)
+	protected async componentVolumeDownHandler(radio: Radio)
 	{
-		return this.setVolume(dbRadio, dbRadio.volume - .1)
+		return this.setVolume(radio, radio.data.volume - .1)
 	}
 
-	protected async componentVolumeUpHandler(dbRadio: Radio)
+	protected async componentVolumeUpHandler(radio: Radio)
 	{
-		return this.setVolume(dbRadio, dbRadio.volume + .1)
+		return this.setVolume(radio, radio.data.volume + .1)
 	}
 }
 

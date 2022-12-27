@@ -7,7 +7,7 @@ import AbstractEntity from './AbstractEntity.js'
 class Radio extends AbstractEntity
 {
 	// Radio state data
-	public readonly radioData: RadioData
+	public readonly data: RadioData
 
 	// public radioMessage: Discord.Message
 
@@ -17,7 +17,7 @@ class Radio extends AbstractEntity
 	{
 		super(bot)
 
-		this.radioData = radioData
+		this.data = radioData
 
 		this.radioMessagePromise = radioData.messageChannelId
 			? bot.client.channels.fetch(radioData.messageChannelId)
