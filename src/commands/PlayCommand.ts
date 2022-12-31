@@ -565,6 +565,7 @@ class PlayCommand extends AbstractCommand
 		}
 
 		interaction.deferUpdate()
+			.catch(error => this.bot.logger.warn('Component defer updater failed', 'PlayCommand', error))
 
 		// const data = dbListener.data as MessageComponentListenerData
 		const radio = this.state.db.guilds.getGuild(interaction.guild).radio.getEntity(this.bot)
