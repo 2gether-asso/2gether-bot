@@ -811,11 +811,6 @@ class PlayCommand extends AbstractCommand
 		const resource = createAudioResource(stream,
 			{
 				inlineVolume: inlineVolume,
-				metadata:
-					{
-						title: 'Meep. owo',
-					},
-
 			})
 
 		// const connection = this.getConnection(voiceChannel)

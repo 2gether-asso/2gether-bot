@@ -41,6 +41,8 @@ class Radio extends AbstractDBType
 
 	public embedColor!: Discord.ColorResolvable
 
+    public lastUpdateTime!: number
+
     public constructor(data?: AbstractDBType)
     {
         super(data)
@@ -60,6 +62,7 @@ class Radio extends AbstractDBType
         this.embedMessageId = undefined
         this.embedTitle = 'Radio'
         this.embedColor = 'Random'
+        this.lastUpdateTime = 0 // Before everything
     }
 
 	public getEntity(bot: Mel): RadioEntity
