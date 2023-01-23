@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  2gether-bot-base:
+    build: "."
+    image: 2gether-bot-base
+
+  2gether-bot-build:
+    image: 2gether-bot-base
+    depends_on:
+      2gether-bot-base:
+        condition: service_completed_successfully
+    entrypoint: [ "npm", "run", "prepare" ]
+    volumes:
+    - "./dist:/app/dist:rw"
+    - "./src:/app/src:ro"
+
+  2gether-bot:
+    image: 2gether-bot-base
+    depends_on:
+      2gether-bot-build:
+        condition: service_completed_successfully
+    entrypoint: [ "npm", "run", "run" ]
+    volumes:
+    - "./config.json:/app/config.json:ro"
+    - "./db:/app/db:rw"
+    - "./dist:/app/dist:ro"
+    - "./translations:/app/translations:ro"
