@@ -839,7 +839,7 @@ class PlayCommand extends AbstractCommand
 		if (!this.playerSubscription)
 		{
 			this.bot.logger.warn('setVolume: No player', 'PlayCommand')
-			throw new Error('No player')
+			return
 		}
 
 		const state = this.playerSubscription.player.state
