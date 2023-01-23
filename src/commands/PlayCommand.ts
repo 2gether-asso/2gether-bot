@@ -595,6 +595,7 @@ class PlayCommand extends AbstractCommand
 					this.updateMessageEmbed(radio)
 						// .then(() => interaction.update({}))
 				})
+			.catch(error => this.bot.logger.error('Component handler error', 'PlayCommand', error))
 	}
 
 	// protected async updateMessageEmbed(message: Discord.Message, dbComponentListener: DBListener | undefined, radio: Radio): Promise<Discord.Message>
