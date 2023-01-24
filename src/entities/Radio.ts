@@ -51,6 +51,13 @@ class Radio extends AbstractEntity
 					return Promise.reject(error)
 				})
 	}
+
+	public isExpired(): boolean
+	{
+		// Expire delay : 20 minutes (in milliseconds)
+		// 20 minutes = 20 * 60 * 1000 = 1200000
+		return this.data.lastUpdateTime + 1200000 < Date.now()
+	}
 }
 
 export default Radio
