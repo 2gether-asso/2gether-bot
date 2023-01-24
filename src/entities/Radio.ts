@@ -11,7 +11,7 @@ class Radio extends AbstractEntity
 
 	// public radioMessage: Discord.Message
 
-	public readonly radioMessagePromise: Promise<Discord.Message<true>>
+	public radioMessagePromise: Promise<Discord.Message<true>>
 
 	public constructor(bot: Mel, radioData: RadioData)
 	{
@@ -19,28 +19,37 @@ class Radio extends AbstractEntity
 
 		this.data = radioData
 
-		this.radioMessagePromise = radioData.messageChannelId
-			? bot.client.channels.fetch(radioData.messageChannelId)
-				.then(channel =>
+		// Load radio message
+		this.radioMessagePromise = this.getRadioMessage()
+	}
+
+	protected getRadioMessage(): Promise<Discord.Message<true>>
+	{
+		if (!this.data.messageChannelId)
+		{
+			return Promise.reject(new Error('Radio message channel ID not specified'))
+		}
+
+		return this.bot.client.channels.fetch(this.data.messageChannelId)
+			.then(channel =>
+				{
+					if (!this.data.messageId)
 					{
-						if (!radioData.messageId)
-						{
-							return Promise.reject(new Error('Radio message ID not specified'))
-						}
+						return Promise.reject(new Error('Radio message ID not specified'))
+					}
 
-						if (channel instanceof Discord.GuildChannel && channel.isTextBased())
-						{
-							return channel.messages.fetch({ message: radioData.messageId, force: true })
-						}
-
+					if (!(channel instanceof Discord.GuildChannel) || !channel.isTextBased())
+					{
 						return Promise.reject(new Error('Channel is not a guild text channel'))
-					})
-				.catch(error =>
-					{
-						bot.logger.warn(`Failed to fetch radio message`, 'Radio', error)
-						return Promise.reject(error)
-					})
-			: Promise.reject(new Error('Radio message channel ID not specified'))
+					}
+
+					return channel.messages.fetch({ message: this.data.messageId, force: true })
+				})
+			.catch(error =>
+				{
+					this.bot.logger.warn(`Failed to fetch radio message`, 'Radio', error)
+					return Promise.reject(error)
+				})
 	}
 }
 
