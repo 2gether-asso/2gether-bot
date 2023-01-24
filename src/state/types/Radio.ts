@@ -12,6 +12,13 @@ class Radio extends AbstractDBType
      * Use push to add a track
      * Use shift to remove a track
      */
+    public currentTrack?: string
+
+    /**
+     * Queue of next tracks to play
+     * Use push to add a track
+     * Use shift to remove a track
+     */
     public queue!: string[]
 
     /**
@@ -50,6 +57,7 @@ class Radio extends AbstractDBType
 
     protected initProperties(): void
     {
+        this.currentTrack = undefined
         this.queue = []
         this.history = []
         this.loopMode = RadioLoopMode.NONE
