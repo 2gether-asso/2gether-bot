@@ -60,6 +60,36 @@ class Radio extends AbstractEntity
 		// 20 minutes = 20 * 60 * 1000 = 1200000
 		return this.data.lastUpdateTime + 1200000 < Date.now()
 	}
+
+	public addTrack(resourceUrl: string): void
+	{
+		this.data.queue.push(resourceUrl)
+	}
+
+	public addNextTrack(resourceUrl: string): void
+	{
+		this.data.queue.unshift(resourceUrl)
+	}
+
+	public nextTrack(): void
+	{
+		if (this.data.currentTrack)
+		{
+			this.data.history.push(this.data.currentTrack)
+		}
+
+		this.data.currentTrack = this.data.queue.shift()
+	}
+
+	public clearQueue(): void
+	{
+		this.data.queue = []
+	}
+
+	public clearHistory(): void
+	{
+		this.data.history = []
+	}
 }
 
 export default Radio
