@@ -13,7 +13,7 @@ class Radio extends AbstractEntity
 
 	// public radioMessage: Discord.Message
 
-	protected messagePromise: Promise<Discord.Message<true>> | undefined = undefined
+	protected messagePromise?: Promise<Discord.Message<true>>
 
 	protected player?: AudioPlayer
 
@@ -21,11 +21,15 @@ class Radio extends AbstractEntity
 
 	protected playerEmbedUpdater?: NodeJS.Timeout
 
+	protected embed: Discord.EmbedBuilder
+
 	public constructor(bot: Mel, radioData: RadioData)
 	{
 		super(bot)
 
 		this.data = radioData
+
+		this.embed = this.initEmbed()
 	}
 
 	public async getMessage(reload: boolean = false): Promise<Discord.Message<true>>
@@ -66,7 +70,7 @@ class Radio extends AbstractEntity
 	{
 		// Expire delay : 20 minutes (in milliseconds)
 		// 20 minutes = 20 * 60 * 1000 = 1200000
-		return this.data.lastUpdateTime + 1200000 < Date.now()
+		return !this.player || this.data.lastUpdateTime + 1200000 < Date.now()
 	}
 
 	public addTrack(resourceUrl: string): void
@@ -483,6 +487,24 @@ class Radio extends AbstractEntity
 		player.play(resource)
 	}
 
+	protected async getTrackInfoAndCheck(urls: string[], index: number): Promise<YTDL.videoInfo | undefined>
+	{
+		if (urls.length > 0 && index >= 0 && index < urls.length)
+		{
+			try
+			{
+				return await YTDL.getInfo(urls[index])
+			}
+			catch
+			{
+				// Failed to get info
+				urls.splice(index, 1) // Remove invalid URL from history
+			}
+		}
+
+		return undefined
+	}
+
 	protected secondsToStr(seconds: number)
 	{
 		// Compute units
@@ -500,6 +522,31 @@ class Radio extends AbstractEntity
 		return `${seconds}s`
 	}
 
+	protected initEmbed(): Discord.EmbedBuilder
+	{
+		const embed = new Discord.EmbedBuilder()
+
+		embed.setTitle(this.data.embedTitle)
+		embed.setColor(this.data.embedColor)
+
+		embed.setDescription('⏹  _Radio stoppée_')
+
+		// Reset fields
+		embed.spliceFields(0, 25)
+
+		embed.addFields(
+			{ name: 'Ajouter une musique', value: `\`/play <YouTube URL>\``, inline: false },
+			{ name: 'len(queue)', value: `${this.data.queue.length}`, inline: true },
+			{ name: 'len(history)', value: `${this.data.history.length}`, inline: true },
+			{ name: 'loopMode', value: `${this.data.loopMode}`, inline: true },
+			{ name: 'volume', value: `${this.data.volume * 100} %`, inline: true },
+			// { name: 'queue', value: `:${this.data.queue.join(',')}`, inline: false },
+			// { name: 'lastPlayed', value: `${this.data.lastPlayed}`, inline: false },
+		)
+
+		return embed
+	}
+
 	public async updateMessageEmbed(): Promise<Discord.Message>
 	{
 		const message = await this.getMessage()
@@ -515,25 +562,10 @@ class Radio extends AbstractEntity
 			throw new Error('No message to update')
 		}
 
-		// const embed = new Discord.MessageEmbed(message.embeds[0])
-		const embed = new Discord.EmbedBuilder(message.embeds[0].data)
-		embed.spliceFields(0, 25) // Reset fields
+		// Reset fields
+		this.embed.spliceFields(0, 25)
 
-		// if (!dbComponentListener)
-		// {
-		// 	embed.setTitle('Invalide')
-		// 	embed.setDescription('Le système de rôle est en échec.')
-		// 	embed.setColor('#ff0000')
-		// }
-		// else
-		// {
-		// 	const data = dbComponentListener.data as MessageComponentListenerData
-		embed.setTitle(this.data.embedTitle)
-		embed.setColor(this.data.embedColor)
-
-		// if (this.data.status) embed.addFields({ name: 'status', value: this.data.status, inline: false })
-
-		embed.addFields(
+		this.embed.addFields(
 			{ name: 'Ajouter une musique', value: `\`/play url:<YouTube url>\``, inline: false },
 			{ name: 'len(queue)', value: `${this.data.queue.length}`, inline: true },
 			{ name: 'len(history)', value: `${this.data.history.length}`, inline: true },
@@ -543,28 +575,9 @@ class Radio extends AbstractEntity
 			// { name: 'lastPlayed', value: `${this.data.lastPlayed}`, inline: false },
 		)
 
-		const getTrackInfo = async (urls: string[], index: number) =>
-		{
-			if (urls.length > 0 && index >= 0 && index < urls.length)
-			{
-				try
-				{
-					return await YTDL.getInfo(urls[index])
-				}
-				catch
-				{
-					// Failed to get info
-					urls.splice(index, 1) // Remove invalid URL from history
-				}
-			}
-
-			return undefined
-		}
-
-		const nextTrackInfo = await getTrackInfo(this.data.queue, 0)
+		const nextTrackInfo = await this.getTrackInfoAndCheck(this.data.queue, 0)
 		const nextTrackTitle = nextTrackInfo ? `\n\n⏭️  \`${nextTrackInfo.videoDetails.title}\`` : ''
 
-		// const player = this.players.get(listener.id)
 		const player = this.player
 		if (player)
 		{
@@ -572,7 +585,7 @@ class Radio extends AbstractEntity
 				? '▶️' // Play icon
 				: '⏸' // Pause icon
 
-			const currentTrackInfo = await getTrackInfo(this.data.history, this.data.history.length - 1)
+			const currentTrackInfo = await this.getTrackInfoAndCheck(this.data.history, this.data.history.length - 1)
 			const currentTrackTitle = currentTrackInfo
 				? `${status}  \`${currentTrackInfo.videoDetails.title}\``
 				: `${status}  _Pas d'information_`
@@ -599,16 +612,15 @@ class Radio extends AbstractEntity
 					return `\n${this.secondsToStr(playbackSeconds)} ▬🔵▬▬▬▬▬▬▬▬▬▬ ▬ ▬ ▬`
 				})()
 
-			embed.setDescription(`${currentTrackTitle}${progressLine}${nextTrackTitle}`)
+			this.embed.setDescription(`${currentTrackTitle}${progressLine}${nextTrackTitle}`)
 		}
 		else {
 			const currentTrackTitle = `⏹  _Radio stoppée_`
 
-			embed.setDescription(`${currentTrackTitle}${nextTrackTitle}`)
+			this.embed.setDescription(`${currentTrackTitle}${nextTrackTitle}`)
 		}
-		// }
 
-		return message.edit({ embeds: [ embed ] })
+		return message.edit({ embeds: [ this.embed ] })
 	}
 }
 
