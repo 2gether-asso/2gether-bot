@@ -297,47 +297,33 @@ class Radio extends AbstractEntity
 		return this.playerSubscription
 	}
 
-	protected async getConnection(voiceChannel: Discord.VoiceBasedChannel | Discord.Snowflake | null | undefined): Promise<VoiceConnection | undefined>
-	protected async getConnection(voiceChannel: Discord.VoiceBasedChannel): Promise<VoiceConnection>
-	protected async getConnection(voiceChannel: Discord.Snowflake): Promise<VoiceConnection | undefined>
-	protected async getConnection(voiceChannel: null | undefined): Promise<undefined>
-	protected async getConnection(voiceChannel: Discord.VoiceBasedChannel | Discord.Snowflake | null | undefined): Promise<VoiceConnection | undefined>
+	protected async getConnection(): Promise<VoiceConnection | undefined>
 	{
-		if (!voiceChannel)
+		if (!this.data.guildId || !this.data.voiceChannelId)
 		{
 			return undefined
 		}
 
-		if (typeof voiceChannel === 'string')
-		{
-			const candidateChannel = await this.bot.client.channels.fetch(voiceChannel)
-			if (candidateChannel && (candidateChannel instanceof Discord.VoiceChannel || candidateChannel instanceof Discord.StageChannel))
-			{
-				voiceChannel = candidateChannel
-			}
-			else
-			{
-				return undefined
-			}
-		}
-
 		// Best practice to not track the voice connection manually
-		const connection = getVoiceConnection(voiceChannel.guild.id)
+		const connection = getVoiceConnection(this.data.guildId)
 		if (connection)
 		{
-			// // We're already connected to a voice channel
-			// this.voiceChannel = connection.voiceChannel;
-			// this.player = connection.player;
-
 			return connection
+		}
+
+		const guild = await this.getGuild().catch(() => undefined)
+		if (!guild)
+		{
+			this.bot.logger.debug('getConnection: No guild', 'PlayCommand')
+			return
 		}
 
 		// Create a new connection
 		// this.voiceChannel = voiceChannel
 		const newConnection = joinVoiceChannel({
-			channelId: voiceChannel.id,
-			guildId: voiceChannel.guild.id,
-			adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+			channelId: this.data.voiceChannelId,
+			guildId: this.data.guildId,
+			adapterCreator: guild.voiceAdapterCreator,
 		})
 
 		// newConnection.on(VoiceConnectionStatus.Connecting)
@@ -373,27 +359,6 @@ class Radio extends AbstractEntity
 		// newConnection.on('stateChange', (oldState, newState) => {})
 
 		return newConnection
-
-		// if (!connection
-		//     || connection.state.status === VoiceConnectionStatus.Destroyed
-		//     || this.voiceChannel?.id !== voiceChannel.id)
-		// {
-		// 	if (connection && connection.state.status !== VoiceConnectionStatus.Destroyed)
-		// 	{
-		// 		// Destroy the previous connection
-		// 		this.connection.destroy()
-		// 	}
-
-		// 	// Create a new connection
-		// 	this.voiceChannel = voiceChannel
-		// 	this.connection = joinVoiceChannel({
-		// 		channelId: voiceChannel.id,
-		// 		guildId: voiceChannel.guild.id,
-		// 		adapterCreator: voiceChannel.guild.me.voiceAdapterCreator,
-		// 	})
-		// }
-
-		// return this.connection
 	}
 
 	public async setVolume(volume?: number): Promise<void>
@@ -461,7 +426,7 @@ class Radio extends AbstractEntity
 			return
 		}
 
-		const connection = await this.getConnection(this.data.voiceChannelId)
+		const connection = await this.getConnection()
 		if (!connection)
 		{
 			// this.bot.logger.error(`playNext: No voice connection (channel: ${guild.me?.voice.channel?.id})`, 'PlayCommand')
