@@ -54,6 +54,30 @@ class Radio extends AbstractEntity
 		return this.guildPromise
 	}
 
+	protected async getTextChannel(): Promise<Discord.GuildBasedChannel & Discord.TextBasedChannel>
+	{
+		if (!this.data.messageChannelId)
+		{
+			return Promise.reject(new Error('Radio message channel ID not specified'))
+		}
+
+		return this.bot.client.channels.fetch(this.data.messageChannelId)
+			.catch(error =>
+				{
+					this.bot.logger.warn(`Failed to fetch radio message channel`, 'Radio', error)
+					return Promise.reject(new Error('Failed to fetch radio message channel'))
+				})
+			.then(channel =>
+				{
+					if (!(channel instanceof Discord.GuildChannel) || !channel.isTextBased())
+					{
+						return Promise.reject(new Error('Radio message channel is not a guild text channel'))
+					}
+
+					return channel
+				})
+	}
+
 	public async getMessage(reload: boolean = false): Promise<Discord.Message<true>>
 	{
 		if (reload || !this.messagePromise)
@@ -63,25 +87,18 @@ class Radio extends AbstractEntity
 				return Promise.reject(new Error('Radio message channel ID not specified'))
 			}
 
-			this.messagePromise = this.bot.client.channels.fetch(this.data.messageChannelId)
-				.then(channel =>
-					{
-						if (!this.data.messageId)
-						{
-							return Promise.reject(new Error('Radio message ID not specified'))
-						}
+			if (!this.data.messageId)
+			{
+				return Promise.reject(new Error('Radio message ID not specified'))
+			}
 
-						if (!(channel instanceof Discord.GuildChannel) || !channel.isTextBased())
-						{
-							return Promise.reject(new Error('Channel is not a guild text channel'))
-						}
-
-						return channel.messages.fetch({ message: this.data.messageId, force: true })
-					})
+			const messageId = this.data.messageId
+			this.messagePromise = this.getTextChannel()
+				.then(channel => channel.messages.fetch({ message: messageId, force: true }))
 				.catch(error =>
 					{
 						this.bot.logger.warn(`Failed to fetch radio message`, 'Radio', error)
-						return Promise.reject(error)
+						return Promise.reject('Failed to fetch radio message')
 					})
 		}
 
