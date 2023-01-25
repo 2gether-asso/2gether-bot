@@ -7,29 +7,6 @@ import AbstractCommand from './AbstractCommand.js'
 import Radio from '../entities/Radio.js'
 import RadioLoopMode from '../state/types/RadioLoopMode.js'
 
-class MessageComponentListenerData
-{
-	public authorId: Discord.Snowflake
-
-	// public emojiRoles: { [emoji: string]: Discord.Snowflake } = {}
-
-	// public configured: boolean = false
-
-	// // title: 'React with an emoji to add or remove yourself a role'
-	public title: string //: 'Menu de sélectionner de rôles'
-
-	public status?: string
-
-	public color: Discord.ColorResolvable
-
-	public constructor(authorId: Discord.Snowflake, title: string = '2GETHER Radio 📻', color: Discord.ColorResolvable = '#0099ff')
-	{
-		this.authorId = authorId
-		this.title = title
-		this.color = color
-	}
-}
-
 enum RadioControlEmojis
 {
 	PLAY = '▶️', // '⏯',
