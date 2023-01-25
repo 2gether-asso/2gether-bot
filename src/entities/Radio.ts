@@ -7,11 +7,11 @@ import RadioData from '../state/types/Radio.js'
 import AbstractEntity from './AbstractEntity.js'
 
 type RadioUserPlayStatus =
-	'not_in_voice_channel' |
+	'not_voice' |
 	'not_joinable' |
-	'already_playing' |
-	'added_track' |
-	'now_playing'
+	'playing' |
+	'queued_track' |
+	'new_player'
 
 type RadioUserPlayResult =
 	{
@@ -496,11 +496,25 @@ class Radio extends AbstractEntity
 		const voiceChannel = member.voice.channel
 		if (!voiceChannel)
 		{
-			return { status: 'not_in_voice_channel' }
+			return { status: 'not_voice' }
 		}
-		else if (!voiceChannel.joinable)
+
+		if (this.isExpired())
 		{
-			return { status: 'not_joinable' }
+			if (!voiceChannel.joinable)
+			{
+				return { status: 'not_joinable' }
+			}
+
+			this.reset()
+
+			this.data.volume = 0.5
+			this.data.authorId = member.id
+			this.data.voiceChannelId = voiceChannel.id
+			this.data.messageChannelId = channelId
+			this.data.messageId = undefined
+			this.data.embedTitle = '📻 🎶  2GETHER Radio'
+			this.data.embedColor = '#0099ff'
 		}
 
 		if (addTrackUrl)
@@ -530,25 +544,12 @@ class Radio extends AbstractEntity
 
 			if (!addTrackUrl)
 			{
-				return { status: 'already_playing' }
+				return { status: 'playing' }
 			}
 			else
 			{
-				return { status: 'added_track' }
+				return { status: 'queued_track' }
 			}
-		}
-
-		if (this.isExpired())
-		{
-			this.reset()
-
-			this.data.volume = 0.5
-			this.data.authorId = member.id
-			this.data.voiceChannelId = voiceChannel.id
-			this.data.messageChannelId = channelId
-			this.data.messageId = undefined
-			this.data.embedTitle = '📻 🎶  2GETHER Radio'
-			this.data.embedColor = '#0099ff'
 		}
 
 		// Inform the user that the message listener has been created
@@ -558,7 +559,7 @@ class Radio extends AbstractEntity
 					// Play the next track, if any
 					this.playNext()
 
-					return { status: 'now_playing', message }
+					return { status: 'new_player', message }
 				})
 			.catch(error =>
 				{

@@ -89,11 +89,11 @@ class PlayCommand extends AbstractCommand
 				{
 					const statusToContent: { [key in typeof result.status]: string } =
 						{
-							not_in_voice_channel: 'Vous devez être dans un salon vocal pour jouer une musique.',
+							not_voice: 'Vous devez être dans un salon vocal pour jouer une musique.',
 							not_joinable: 'Je suis dans l\'incapacité de te rejoindre dans le salon vocal, désolé.',
-							already_playing: `Je suis déjà en train de jouer quelque chose !`,
-							added_track: `J'ai ajouté ta musique à la playlist`,
-							now_playing: 'C\'est bon !',
+							playing: `Je suis déjà en train de jouer quelque chose !`,
+							queued_track: `J'ai ajouté ta musique à la playlist`,
+							new_player: 'C\'est bon !',
 						}
 
 					interaction.editReply(
@@ -101,7 +101,7 @@ class PlayCommand extends AbstractCommand
 							content: statusToContent[result.status] ?? 'Un succès inconnu est survenu.',
 						})
 
-					if (result.message)
+					if (result.status == 'new_player' && result.message)
 					{
 						result.message.edit(
 							{
