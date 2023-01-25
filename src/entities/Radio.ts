@@ -83,7 +83,7 @@ class Radio extends AbstractEntity
 		this.data.queue.unshift(resourceUrl)
 	}
 
-	public nextTrack(): void
+	public nextTrack(): string | undefined
 	{
 		if (this.data.currentTrack)
 		{
@@ -91,6 +91,11 @@ class Radio extends AbstractEntity
 		}
 
 		this.data.currentTrack = this.data.queue.shift()
+
+		// Save changes
+		this.state.save()
+
+		return this.data.currentTrack
 	}
 
 	public clearQueue(): void
@@ -435,8 +440,6 @@ class Radio extends AbstractEntity
 			return
 		}
 
-		// Note: guild.me does not exist
-		// const connection = await this.getConnection(guild.me?.voice.channel ?? this.data.voiceChannelId)
 		const connection = await this.getConnection(this.data.voiceChannelId)
 		if (!connection)
 		{
@@ -445,35 +448,16 @@ class Radio extends AbstractEntity
 			return
 		}
 
-		// const radio = _radio ?? this.state.db.guilds.getGuild(guild).radio
-
 		this.bot.logger.debug('playNext', 'PlayCommand')
 
-		const hadPlayer = this.player !== undefined // s.has(listener.id)
-
 		// Unqueue the next track to play
-		const nextTrack = this.data.queue.shift()
+		const nextTrack = this.nextTrack()
 		if (!nextTrack)
 		{
-			// Nothing next to play
-			// message.channel.send(`Fini, la playlist est vide`, await getStatusEmbed());
-
-			// Mute the bot
-			// connection.setSpeaking(false)
-			// guild.me?.voice.setMute(true)
-			// 	.catch(error => this.bot.logger.warn('Failed to mute', 'PlayCommand', error))
-
-			// Stop the player if it is initialized
+			// Nothing to play, stop the player
 			this.stopPlayer()
-
 			return
 		}
-
-		// Push the track to play in history
-		this.data.history.push(nextTrack)
-
-		// Save changes to the queue
-		this.state.save()
 
 		// Unmute
 		// connection.setSpeaking(true)
