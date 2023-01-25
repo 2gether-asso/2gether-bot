@@ -208,6 +208,8 @@ class Radio extends AbstractEntity
 				this.bot.logger.warn('Player stop failed', 'PlayCommand')
 			}
 		}
+
+		this.data.lastUpdateTime = Date.now()
 	}
 
 	protected onAudioPlayerPlaying(oldState: AudioPlayerState, newState: AudioPlayerState & { status: AudioPlayerStatus }): void
@@ -429,12 +431,20 @@ class Radio extends AbstractEntity
 
 	public play(): void
 	{
-		this.player ? this.player.unpause() : this.playNext()
+		if (this.player)
+		{
+			this.player.unpause()
+			this.data.lastUpdateTime = Date.now()
+			return
+		}
+
+		this.playNext()
 	}
 
 	public pause(): void
 	{
 		this.player && this.player.pause()
+		this.data.lastUpdateTime = Date.now()
 	}
 
 	public async playNext(): Promise<void>
@@ -488,6 +498,7 @@ class Radio extends AbstractEntity
 		this.playerSubscription = connection.subscribe(player)
 
 		player.play(resource)
+		this.data.lastUpdateTime = Date.now()
 	}
 
 	protected async getTrackInfoAndCheck(urls: string[], index: number): Promise<YTDL.videoInfo | undefined>
