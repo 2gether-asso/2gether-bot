@@ -38,11 +38,6 @@ class Radio extends AbstractEntity
 	{
 		if (reload || !this.guildPromise)
 		{
-			if (!this.data.guildId)
-			{
-				return Promise.reject(new Error('Radio guild ID not specified'))
-			}
-
 			this.guildPromise = this.bot.client.guilds.fetch(this.data.guildId)
 				.catch(error =>
 					{
