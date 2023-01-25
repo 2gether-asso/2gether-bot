@@ -78,7 +78,7 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		interaction.deferReply({ ephemeral: true })
+		await interaction.deferReply({ ephemeral: true })
 
 		const radio = this.state.db.guilds.getGuild(interaction.guild).radio.getEntity(this.bot)
 
