@@ -6,20 +6,7 @@ import YTDL from 'ytdl-core'
 import AbstractCommand from './AbstractCommand.js'
 import Radio from '../entities/Radio.js'
 import RadioLoopMode from '../state/types/RadioLoopMode.js'
-
-enum RadioControlEmojis
-{
-	PLAY = '▶️', // '⏯',
-	PAUSE = '⏸️',
-	PREVIOUS = '⏮',
-	NEXT = '⏭',
-	LOOP_TOGGLE = '🔁',
-	CLEAR = '⏏️',
-	STOP = '⏹️',
-	MUTE = '🔇',
-	VOLUME_DOWN = '🔉',
-	VOLUME_UP = '🔊',
-}
+import RadioControlEmojis from '../enums/RadioControlEmojis.js'
 
 type RadioControlComponentId = `${string}:${keyof typeof RadioControlEmojis}`
 
