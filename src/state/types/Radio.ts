@@ -45,8 +45,6 @@ class Radio extends AbstractDBType
 
     public messageId?: Discord.Snowflake
 
-	public embedMessageId?: Discord.Snowflake
-
 	public embedTitle!: string
 
 	public embedColor!: Discord.ColorResolvable
@@ -71,7 +69,6 @@ class Radio extends AbstractDBType
         this.voiceChannelId = undefined
         this.messageChannelId = undefined
         this.messageId = undefined
-        this.embedMessageId = undefined
         this.embedTitle = 'Radio'
         this.embedColor = 'Random'
         this.lastUpdateTime = 0 // Before everything
