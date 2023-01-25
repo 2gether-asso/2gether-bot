@@ -5,6 +5,8 @@ import GiveawayEntity from '../../entities/Giveaway.js'
 
 class Giveaway extends AbstractDBType
 {
+	private giveawayEntity?: GiveawayEntity
+
 	// Giveaway data
 	public title!: string
 	public description!: string
@@ -49,7 +51,12 @@ class Giveaway extends AbstractDBType
 
 	public getEntity(bot: Mel): GiveawayEntity
 	{
-		return new GiveawayEntity(bot, this)
+        if (!this.giveawayEntity)
+        {
+            this.giveawayEntity = new GiveawayEntity(bot, this)
+        }
+
+		return this.giveawayEntity
 	}
 }
 
