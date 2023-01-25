@@ -114,24 +114,24 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
+		interaction.deferReply({ ephemeral: true })
+
 		const guild = interaction.guild
 		const radio = this.state.db.guilds.getGuild(guild).radio.getEntity(this.bot)
 
 		const voiceChannel = interaction.member.voice.channel
 		if (!voiceChannel)
 		{
-			interaction.reply({
+			interaction.editReply({
 					content: 'Vous devez être dans un salon vocal pour jouer une musique.',
-					ephemeral: true,
 				})
 			return
 		}
 		else if (!voiceChannel.joinable)
 		{
 			this.bot.logger.debug(`Unable to join voice channel ${voiceChannel.name} (${voiceChannel.id})`, 'PlayCommand')
-			interaction.reply({
+			interaction.editReply({
 					content: 'Je suis dans l\'incapacité de te rejoindre dans le salon vocal, désolé.',
-					ephemeral: true,
 				})
 			return
 		}
@@ -158,29 +158,26 @@ class PlayCommand extends AbstractCommand
 		const playerSubscription = radio.getPlayerSubscription()
 		if (playerSubscription) // && this.isPlaying)
 		{
-			if (playerSubscription.player.state.status !== AudioPlayerStatus.Playing)
-			{
-				// this.player.play()
-				// interaction.reply(`Reprise de la lecture`, await getStatusEmbed())
-				interaction.reply({
-						content: `Reprise de la lecture`,
-						ephemeral: true,
-					})
-			}
+			// if (playerSubscription.player.state.status !== AudioPlayerStatus.Playing)
+			// {
+			// 	interaction.editReply({
+			// 			content: `Reprise de la lecture`,
+			// 		})
+			// }
 
-			else if (!resourceUrl)
+			if (!resourceUrl)
 			{
-				// interaction.reply(`Je suis déjà en train de jouer quelque chose !`, await getStatusEmbed())
-				interaction.reply({
+				interaction.editReply({
 						content: `Je suis déjà en train de jouer quelque chose !`,
-						ephemeral: true,
+					})
+			}
+			else
+			{
+				interaction.editReply({
+						content: `J'ai ajouté ta musique à la playlist`,
 					})
 			}
 
-			interaction.reply({
-					content: `J'ai ajouté ta musique à la playlist`,
-					ephemeral: true,
-				})
 			return
 		}
 
