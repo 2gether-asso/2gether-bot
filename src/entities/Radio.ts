@@ -188,6 +188,13 @@ class Radio extends AbstractEntity
 				this.bot.logger.warn('Player stop failed', 'PlayCommand')
 			}
 		}
+
+		this.getGuild().then(guild =>
+			{
+				// Mute the bot
+				guild.members.me?.voice.setMute(true)
+					.catch(error => this.bot.logger.error('Failed to mute', 'PlayCommand', error))
+			})
 	}
 
 	protected onAudioPlayerPlaying(oldState: AudioPlayerState, newState: AudioPlayerState & { status: AudioPlayerStatus }): void
@@ -480,10 +487,9 @@ class Radio extends AbstractEntity
 			return
 		}
 
-		// Unmute
-		// connection.setSpeaking(true)
-		// await guild.me?.voice.setMute(false)
-		// 	.catch(error => this.bot.logger.error('Failed to unmute', 'PlayCommand', error))
+		// Unmute the bot
+		const unmutePromise = guild.members.me?.voice.setMute(false)
+			.catch(error => this.bot.logger.error('Failed to unmute', 'PlayCommand', error))
 
 		const stream = YTDL(nextTrack,
 			{
@@ -506,9 +512,8 @@ class Radio extends AbstractEntity
 
 		const player = this.getPlayer()
 		this.playerSubscription = connection.subscribe(player)
-		// this.playerSubscription?.connection.on()
-		// this.playerSubscription?.player.on()
 
+		await Promise.allSettled([unmutePromise])
 		player.play(resource)
 	}
 
