@@ -71,7 +71,30 @@ class RadioCommand extends AbstractCommand
 
 	async onCommandInteraction(interaction: Discord.CommandInteraction): Promise<void>
 	{
-		if (!interaction.isCommand() || !interaction.guild || !interaction.channel || !(interaction.member instanceof Discord.GuildMember))
+		if (!interaction.isChatInputCommand())
+		{
+			return
+		}
+
+		const subCommandsHandlers = new Map<string, () => Promise<void>>()
+			.set('play', this.onPlayCommand.bind(this, interaction))
+
+		const subcommand = interaction.options.getSubcommand()
+		const componentsHandler = subCommandsHandlers.get(subcommand)
+		if (!componentsHandler)
+		{
+			this.bot.logger.warn(`Unknown subcommand: ${subcommand}`, 'RadioCommand')
+			interaction.reply({ content: 'Unknown subcommand.', ephemeral: true })
+			return
+		}
+
+		componentsHandler()
+			.catch(error => this.bot.logger.error('Component handler error', 'RadioCommand', error))
+	}
+
+	async onPlayCommand(interaction: Discord.ChatInputCommandInteraction): Promise<void>
+	{
+		if (!interaction.guild || !interaction.channel || !(interaction.member instanceof Discord.GuildMember))
 		{
 			return
 		}
