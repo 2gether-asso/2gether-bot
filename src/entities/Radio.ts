@@ -501,6 +501,12 @@ class Radio extends AbstractEntity
 		this.data.lastUpdateTime = Date.now()
 	}
 
+	public reset(): void
+	{
+		this.stopPlayer()
+		this.clearMessage()
+	}
+
 	protected async getTrackInfoAndCheck(urls: string[], index: number): Promise<YTDL.videoInfo | undefined>
 	{
 		if (urls.length > 0 && index >= 0 && index < urls.length)
