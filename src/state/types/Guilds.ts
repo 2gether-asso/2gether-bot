@@ -9,7 +9,7 @@ class Guilds extends AbstractDBMapType<Snowflake, Guild>
 	{
 		for (const key in other)
 		{
-			const guild = new Guild(other[key])
+			const guild = new Guild(key, other[key])
 			this.set(key, guild)
 		}
 
@@ -24,7 +24,7 @@ class Guilds extends AbstractDBMapType<Snowflake, Guild>
 			return dbGuild
 		}
 
-		const newGuild = new Guild()
+		const newGuild = new Guild(guild.id)
 		this.set(guild.id, newGuild)
 		return newGuild
 	}
