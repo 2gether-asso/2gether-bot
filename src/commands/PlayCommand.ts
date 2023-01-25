@@ -87,48 +87,19 @@ class PlayCommand extends AbstractCommand
 		radio.userPlay(interaction.member, interaction.channel.id, typeof resourceUrl === 'string' ? resourceUrl : undefined)
 			.then(result =>
 				{
-					if (result.status === 'not_in_voice_channel')
-					{
-						interaction.editReply(
-							{
-								content: 'Vous devez être dans un salon vocal pour jouer une musique.',
-							})
-					}
-					else if (result.status === 'not_joinable')
-					{
-						interaction.editReply(
-							{
-								content: 'Je suis dans l\'incapacité de te rejoindre dans le salon vocal, désolé.',
-							})
-					}
-					else if (result.status === 'already_playing')
-					{
-						interaction.editReply(
-							{
-								content: `Je suis déjà en train de jouer quelque chose !`,
-							})
-					}
-					else if (result.status === 'added_track')
-					{
-						interaction.editReply(
-							{
-								content: `J'ai ajouté ta musique à la playlist`,
-							})
-					}
-					else if (result.status === 'now_playing')
-					{
-						interaction.editReply(
-							{
-								content: 'C\'est bon !',
-							})
-					}
-					else
-					{
-						interaction.editReply(
-							{
-								content: 'Un succès inconnu est survenu.',
-							})
-					}
+					const statusToContent: { [key in typeof result.status]: string } =
+						{
+							not_in_voice_channel: 'Vous devez être dans un salon vocal pour jouer une musique.',
+							not_joinable: 'Je suis dans l\'incapacité de te rejoindre dans le salon vocal, désolé.',
+							already_playing: `Je suis déjà en train de jouer quelque chose !`,
+							added_track: `J'ai ajouté ta musique à la playlist`,
+							now_playing: 'C\'est bon !',
+						}
+
+					interaction.editReply(
+						{
+							content: statusToContent[result.status] ?? 'Un succès inconnu est survenu.',
+						})
 
 					if (result.message)
 					{
