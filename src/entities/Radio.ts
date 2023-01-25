@@ -6,6 +6,19 @@ import YTDL from 'ytdl-core'
 import RadioData from '../state/types/Radio.js'
 import AbstractEntity from './AbstractEntity.js'
 
+type RadioUserPlayStatus =
+	'not_in_voice_channel' |
+	'not_joinable' |
+	'already_playing' |
+	'added_track' |
+	'now_playing'
+
+type RadioUserPlayResult =
+	{
+		status: RadioUserPlayStatus,
+		message?: Discord.Message<true>,
+	}
+
 class Radio extends AbstractEntity
 {
 	// Radio state data
@@ -478,6 +491,83 @@ class Radio extends AbstractEntity
 		this.data.lastUpdateTime = Date.now()
 	}
 
+	public async userPlay(member: Discord.GuildMember, channelId: Discord.Snowflake, addTrackUrl?: string): Promise<RadioUserPlayResult>
+	{
+		const voiceChannel = member.voice.channel
+		if (!voiceChannel)
+		{
+			return { status: 'not_in_voice_channel' }
+		}
+		else if (!voiceChannel.joinable)
+		{
+			return { status: 'not_joinable' }
+		}
+
+		if (addTrackUrl)
+		{
+			const player = this.getPlayer()
+			if (player)
+			{
+				// Add track to the queue
+				this.bot.logger.debug(`Queue track: ${addTrackUrl}`, `Radio:${this.data.guildId}`)
+				this.queueTrack(addTrackUrl)
+			}
+			else
+			{
+				// Add track to play next
+				this.bot.logger.debug(`Queue track first: ${addTrackUrl}`, `Radio:${this.data.guildId}`)
+				this.queueTrackFirst(addTrackUrl)
+			}
+		}
+
+		const playerSubscription = this.getPlayerSubscription()
+		if (playerSubscription) // && this.isPlaying)
+		{
+			// if (playerSubscription.player.state.status !== AudioPlayerStatus.Playing)
+			// {
+			// 	return 'resume_playing'
+			// }
+
+			if (!addTrackUrl)
+			{
+				return { status: 'already_playing' }
+			}
+			else
+			{
+				return { status: 'added_track' }
+			}
+		}
+
+		if (this.isExpired())
+		{
+			this.reset()
+
+			this.data.volume = 0.5
+			this.data.authorId = member.id
+			this.data.voiceChannelId = voiceChannel.id
+			this.data.messageChannelId = channelId
+			this.data.messageId = undefined
+			this.data.embedTitle = '📻 🎶  2GETHER Radio'
+			this.data.embedColor = '#0099ff'
+		}
+
+		// Inform the user that the message listener has been created
+		return this.updateMessageEmbed()
+			.then((message: Discord.Message<true>): RadioUserPlayResult =>
+				{
+					// Play the next track, if any
+					this.playNext()
+
+					return { status: 'now_playing', message }
+				})
+			.catch(error =>
+				{
+					// TODO: clean up? delete the message? edit it?
+					this.bot.logger.error('userPlay: An error occurred', 'Radio', error)
+					throw new Error('An error occurred')
+				})
+	}
+
 	public async playNext(): Promise<void>
 	{
 		const guild = await this.getGuild().catch(() => undefined)
@@ -598,7 +688,7 @@ class Radio extends AbstractEntity
 		return embed
 	}
 
-	public async updateMessageEmbed(): Promise<Discord.Message>
+	public async updateMessageEmbed(): Promise<Discord.Message<true>>
 	{
 		// Reset fields
 		this.embed.spliceFields(0, 25)
