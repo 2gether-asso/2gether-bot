@@ -1,10 +1,13 @@
 import { AbstractDBType, Discord, Mel } from 'discord-mel'
 
 import RadioEntity from '../../entities/Radio.js'
+import Guild from './Guild.js'
 import RadioLoopMode from './RadioLoopMode.js'
 
 class Radio extends AbstractDBType
 {
+    #guild: Guild
+
     #radioEntity?: RadioEntity
 
     // public listenerId?: string
@@ -36,8 +39,6 @@ class Radio extends AbstractDBType
 
 	public authorId?: Discord.Snowflake
 
-	public guildId?: Discord.Snowflake
-
     public voiceChannelId?: Discord.Snowflake
 
     public messageChannelId?: Discord.Snowflake
@@ -52,9 +53,11 @@ class Radio extends AbstractDBType
 
     public lastUpdateTime!: number
 
-    public constructor(data?: AbstractDBType)
+    public constructor(guild: Guild, data?: AbstractDBType)
     {
         super(data)
+
+        this.#guild = guild
     }
 
     protected initProperties(): void
@@ -65,7 +68,6 @@ class Radio extends AbstractDBType
         this.loopMode = RadioLoopMode.NONE
         this.volume = 0.5
         this.authorId = undefined
-        this.guildId = undefined
         this.voiceChannelId = undefined
         this.messageChannelId = undefined
         this.messageId = undefined

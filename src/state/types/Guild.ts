@@ -13,7 +13,7 @@ class Guild extends AbstractDBType
 
 	protected initProperties(): void
 	{
-		this.radio = new Radio()
+		this.radio = new Radio(this)
 	}
 }
 
