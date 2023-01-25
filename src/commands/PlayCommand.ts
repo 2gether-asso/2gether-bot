@@ -189,7 +189,7 @@ class PlayCommand extends AbstractCommand
 		// 	this.bot.listeners.delete(radio.data.listenerId)
 		// }
 
-		interaction.deferReply()
+		interaction.deferReply({ ephemeral: true })
 
 		// Post the audio player message
 		interaction.channel.send({
@@ -269,7 +269,7 @@ class PlayCommand extends AbstractCommand
 								return radio.playNext()
 							})
 				})
-			.then(() => interaction.editReply({ content: 'C\'est bon !' })) // ephemeral: true
+			.then(() => interaction.editReply({ content: 'C\'est bon !' }))
 			.catch(error =>
 				{
 					// TODO: clean up? delete the message? edit it to say it failed?
