@@ -505,7 +505,7 @@ class Radio extends AbstractEntity
 				return { status: 'not_joinable' }
 			}
 
-			this.reset()
+			await this.reset()
 
 			this.data.volume = 0.5
 			this.data.authorId = member.id
@@ -626,10 +626,10 @@ class Radio extends AbstractEntity
 		this.data.lastUpdateTime = Date.now()
 	}
 
-	public reset(): void
+	public async reset(): Promise<void>
 	{
 		this.stopPlayer()
-		this.clearMessage()
+		await this.clearMessage()
 	}
 
 	protected async getTrackInfoAndCheck(urls: string[], index: number): Promise<YTDL.videoInfo | undefined>
