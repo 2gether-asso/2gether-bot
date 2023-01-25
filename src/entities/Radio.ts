@@ -141,7 +141,7 @@ class Radio extends AbstractEntity
 	{
 		// Expire delay : 20 minutes (in milliseconds)
 		// 20 minutes = 20 * 60 * 1000 = 1200000
-		return !this.player || this.data.lastUpdateTime + 1200000 < Date.now()
+		return this.data.lastUpdateTime + 10000 < Date.now()
 	}
 
 	public queueTrack(resourceUrl: string): void
@@ -603,10 +603,12 @@ class Radio extends AbstractEntity
 
 		this.embed.addFields(
 			{ name: 'Ajouter une musique', value: `\`/play url:<YouTube url>\``, inline: false },
-			{ name: 'len(queue)', value: `${this.data.queue.length}`, inline: true },
-			{ name: 'len(history)', value: `${this.data.history.length}`, inline: true },
-			{ name: 'loopMode', value: `${this.data.loopMode}`, inline: true },
-			{ name: 'volume', value: `${this.data.volume * 100} %`, inline: true },
+			{ name: 'Playlist', value: `${this.data.queue.length}`, inline: true },
+			{ name: 'Historique', value: `${this.data.history.length}`, inline: true },
+			{ name: 'Mode', value: `${this.data.loopMode}`, inline: true },
+			{ name: 'Volume', value: `${this.data.volume * 100} %`, inline: true },
+			{ name: 'Auteur', value: `<@${this.data.authorId}>`, inline: true },
+			{ name: 'Mise à jour', value: `${new Date(this.data.lastUpdateTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`, inline: true },
 			// { name: 'queue', value: `:${this.data.queue.join(',')}`, inline: false },
 			// { name: 'lastPlayed', value: `${this.data.lastPlayed}`, inline: false },
 		)
