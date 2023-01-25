@@ -181,96 +181,86 @@ class PlayCommand extends AbstractCommand
 			return
 		}
 
-		// if (radio.data.listenerId)
-		// {
-		// 	this.bot.listeners.delete(radio.data.listenerId)
-		// }
+		if (radio.isExpired())
+		{
+			radio.reset()
 
-		interaction.deferReply({ ephemeral: true })
+			radio.data.volume = 0.5
+			radio.data.authorId = interaction.user.id
+			radio.data.voiceChannelId = voiceChannel.id
+			radio.data.messageChannelId = interaction.channel.id
+			radio.data.messageId = undefined
+			radio.data.embedTitle = '📻 🎶  2GETHER Radio'
+			radio.data.embedColor = '#0099ff'
+		}
 
-		// Post the audio player message
-		interaction.channel.send({
-				content: 'Chargement...',
-			})
-			.then(message =>
+		// Inform the user that the message listener has been created
+		return radio.updateMessageEmbed()
+			// .then(updatedMessage => updatedMessage.edit({ content: null }))
+			.then(updatedMessage => updatedMessage.edit(
 				{
-					// Configure the radio
-					radio.data.volume = 0.5
-					radio.data.embedMessageId = message.id
-					radio.data.authorId = interaction.user.id
-					radio.data.guildId = guild.id
-					radio.data.voiceChannelId = voiceChannel.id
-					radio.data.messageChannelId = message.channel.id
-					radio.data.messageId = message.id
-					radio.data.embedTitle = '📻 🎶  2GETHER Radio'
-					radio.data.embedColor = '#0099ff'
+					content: null,
+					components: [
+						new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
+							.setComponents(
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_PREVIOUS)
+									.setLabel(RadioControlEmojis.PREVIOUS)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_PLAY)
+									.setLabel(RadioControlEmojis.PLAY)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_PAUSE)
+									.setLabel(RadioControlEmojis.PAUSE)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_NEXT)
+									.setLabel(RadioControlEmojis.NEXT)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_LOOP_TOGGLE)
+									.setLabel(RadioControlEmojis.LOOP_TOGGLE)
+									.setStyle(Discord.ButtonStyle.Secondary),
+							),
+						new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
+							.setComponents(
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_CLEAR)
+									.setLabel(RadioControlEmojis.CLEAR)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_STOP)
+									.setLabel(RadioControlEmojis.STOP)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_MUTE)
+									.setLabel(RadioControlEmojis.MUTE)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_VOLUME_DOWN)
+									.setLabel(RadioControlEmojis.VOLUME_DOWN)
+									.setStyle(Discord.ButtonStyle.Secondary),
+								new Discord.ButtonBuilder()
+									.setCustomId(this.COMPONENT_VOLUME_UP)
+									.setLabel(RadioControlEmojis.VOLUME_UP)
+									.setStyle(Discord.ButtonStyle.Secondary),
+							),
+					]
+				}))
+			.then(() =>
+				{
+					interaction.editReply({ content: 'C\'est bon !' })
 
-					// Inform the user that the message listener has been created
-					return radio.updateMessageEmbed()
-						// .then(updatedMessage => updatedMessage.edit({ content: null }))
-						.then(updatedMessage => updatedMessage.edit(
-							{
-								content: null,
-								components: [
-									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
-										.setComponents(
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_PREVIOUS)
-												.setLabel(RadioControlEmojis.PREVIOUS)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_PLAY)
-												.setLabel(RadioControlEmojis.PLAY)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_PAUSE)
-												.setLabel(RadioControlEmojis.PAUSE)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_NEXT)
-												.setLabel(RadioControlEmojis.NEXT)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_LOOP_TOGGLE)
-												.setLabel(RadioControlEmojis.LOOP_TOGGLE)
-												.setStyle(Discord.ButtonStyle.Secondary),
-										),
-									new Discord.ActionRowBuilder<Discord.ButtonBuilder>()
-										.setComponents(
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_CLEAR)
-												.setLabel(RadioControlEmojis.CLEAR)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_STOP)
-												.setLabel(RadioControlEmojis.STOP)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_MUTE)
-												.setLabel(RadioControlEmojis.MUTE)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_VOLUME_DOWN)
-												.setLabel(RadioControlEmojis.VOLUME_DOWN)
-												.setStyle(Discord.ButtonStyle.Secondary),
-											new Discord.ButtonBuilder()
-												.setCustomId(this.COMPONENT_VOLUME_UP)
-												.setLabel(RadioControlEmojis.VOLUME_UP)
-												.setStyle(Discord.ButtonStyle.Secondary),
-										),
-								]
-							}))
-						.then(_ =>
-							{
-								// Play the next track, if any
-								return radio.playNext()
-							})
+					// Play the next track, if any
+					radio.playNext()
 				})
-			.then(() => interaction.editReply({ content: 'C\'est bon !' }))
 			.catch(error =>
 				{
-					// TODO: clean up? delete the message? edit it to say it failed?
+					// TODO: clean up? delete the message? edit it?
 					this.bot.logger.error('An error occurred', 'PlayCommand', error)
+					interaction.editReply({ content: 'Une erreur est survenue...' })
 				})
 	}
 
