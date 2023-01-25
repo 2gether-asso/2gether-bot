@@ -38,19 +38,19 @@ class RadioCommand extends AbstractCommand
 		this.applicationCommands
 			.add((() =>
 				{
-					const slashCommand = (new SlashCommandBuilder())
+					const slashCommand = new SlashCommandBuilder()
+					slashCommand
 						.setName(this.name)
 						.setDescription(this.description)
-
-					slashCommand.addSubcommand(subcommand => subcommand
-							.setName('play')
-							.setDescription('Joue une musique et l\'ajoute à la playlist.')
-							.addStringOption(option => option
-									.setName('url')
-									.setDescription('Lien de la musique à jouer.')
-									.setRequired(false)
-								)
-						)
+						.addSubcommand(subcommand => subcommand
+								.setName('play')
+								.setDescription('Joue une musique et l\'ajoute à la playlist.')
+								.addStringOption(option => option
+										.setName('url')
+										.setDescription('Lien de la musique à jouer.')
+										.setRequired(false)
+									)
+							)
 
 					return slashCommand
 				})())
