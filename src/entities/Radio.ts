@@ -100,6 +100,14 @@ class Radio extends AbstractEntity
 		return this.messagePromise
 	}
 
+	protected async clearMessage(): Promise<void>
+	{
+		await this.clearMessageEmbed()
+			.catch(error => this.bot.logger.warn(`No radio message embed to clear`, 'Radio', error))
+
+		this.messagePromise = undefined
+	}
+
 	public isExpired(): boolean
 	{
 		// Expire delay : 20 minutes (in milliseconds)
@@ -616,6 +624,23 @@ class Radio extends AbstractEntity
 		}
 
 		return message.edit({ embeds: [ this.embed ] })
+	}
+
+	public async clearMessageEmbed(): Promise<Discord.Message>
+	{
+		const message = await this.getMessage()
+			.catch((error) =>
+				{
+					this.bot.logger.warn(error, 'PlayCommand')
+					return undefined
+				})
+
+		if (!message)
+		{
+			throw new Error('No message to update')
+		}
+
+		return message.edit({ content: '_Radio terminée_', embeds: [] })
 	}
 }
 
