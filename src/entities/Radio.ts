@@ -610,7 +610,7 @@ class Radio extends AbstractEntity
 			{ name: 'Mode', value: `${this.data.loopMode}`, inline: true },
 			{ name: 'Volume', value: `${this.data.volume * 100} %`, inline: true },
 			{ name: 'Auteur', value: `<@${this.data.authorId}>`, inline: true },
-			{ name: 'Mise à jour', value: `${new Date(this.data.lastUpdateTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`, inline: true },
+			// { name: 'Mise à jour', value: `${new Date(this.data.lastUpdateTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`, inline: true },
 			// { name: 'queue', value: `:${this.data.queue.join(',')}`, inline: false },
 			// { name: 'lastPlayed', value: `${this.data.lastPlayed}`, inline: false },
 		)
