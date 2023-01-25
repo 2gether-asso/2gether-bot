@@ -5,7 +5,7 @@ import RadioLoopMode from './RadioLoopMode.js'
 
 class Radio extends AbstractDBType
 {
-    private radioEntity?: RadioEntity
+    #radioEntity?: RadioEntity
 
     // public listenerId?: string
 
@@ -77,12 +77,12 @@ class Radio extends AbstractDBType
 
 	public getEntity(bot: Mel): RadioEntity
 	{
-        if (!this.radioEntity)
+        if (!this.#radioEntity)
         {
-            this.radioEntity = new RadioEntity(bot, this)
+            this.#radioEntity = new RadioEntity(bot, this)
         }
 
-		return this.radioEntity
+		return this.#radioEntity
 	}
 }
 
