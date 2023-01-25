@@ -251,8 +251,6 @@ class Radio extends AbstractEntity
 				this.bot.logger.warn('Player stop failed', 'PlayCommand')
 			}
 		}
-
-		this.data.lastUpdateTime = Date.now()
 	}
 
 	protected onAudioPlayerPlaying(oldState: AudioPlayerState, newState: AudioPlayerState & { status: AudioPlayerStatus }): void
