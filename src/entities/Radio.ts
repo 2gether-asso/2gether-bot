@@ -13,6 +13,8 @@ class Radio extends AbstractEntity
 
 	// public radioMessage: Discord.Message
 
+	protected guildPromise?: Promise<Discord.Guild>
+
 	protected messagePromise?: Promise<Discord.Message<true>>
 
 	protected player?: AudioPlayer
@@ -30,6 +32,26 @@ class Radio extends AbstractEntity
 		this.data = radioData
 
 		this.embed = this.initEmbed()
+	}
+
+	public async getGuild(reload: boolean = false): Promise<Discord.Guild>
+	{
+		if (reload || !this.guildPromise)
+		{
+			if (!this.data.guildId)
+			{
+				return Promise.reject(new Error('Radio guild ID not specified'))
+			}
+
+			this.guildPromise = this.bot.client.guilds.fetch(this.data.guildId)
+				.catch(error =>
+					{
+						this.bot.logger.warn(`Failed to fetch radio guild`, 'Radio', error)
+						return Promise.reject(error)
+					})
+		}
+
+		return this.guildPromise
 	}
 
 	public async getMessage(reload: boolean = false): Promise<Discord.Message<true>>
@@ -432,8 +454,7 @@ class Radio extends AbstractEntity
 
 	public async playNext(): Promise<void>
 	{
-		// const guild = listener.message.guild
-		const guild = this.data.guildId ? await this.bot.client.guilds.fetch(this.data.guildId) : undefined
+		const guild = await this.getGuild().catch(() => undefined)
 		if (!guild)
 		{
 			this.bot.logger.debug('playNext: No guild', 'PlayCommand')
