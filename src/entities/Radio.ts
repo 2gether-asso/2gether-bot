@@ -657,7 +657,7 @@ class Radio extends AbstractEntity
 			throw new Error('No message to update')
 		}
 
-		return message.edit({ content: '_Radio terminée_', embeds: [] })
+		return message.edit({ content: '_Radio terminée_', embeds: [], components: [] })
 	}
 }
 
