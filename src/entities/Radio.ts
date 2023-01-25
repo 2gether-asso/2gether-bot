@@ -265,6 +265,8 @@ class Radio extends AbstractEntity
 			{
 				if (this.player && this.player.state.status === AudioPlayerStatus.Playing)
 				{
+					this.data.lastUpdateTime = Date.now()
+
 					this.updateMessageEmbed()
 						.then(() =>
 							{
