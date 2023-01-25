@@ -10,7 +10,7 @@ import RadioControlEmojis from '../enums/RadioControlEmojis.js'
 
 type RadioControlComponentId = `${string}:${keyof typeof RadioControlEmojis}`
 
-class PlayCommand extends AbstractCommand
+class RadioCommand extends AbstractCommand
 {
 	public static readonly enabled: boolean = true
 
@@ -29,8 +29,8 @@ class PlayCommand extends AbstractCommand
 	{
 		super(id, bot)
 
-		this.name = 'play'
-		this.description = 'Joue une musique et l\'ajoute à la playlist.'
+		this.name = 'radio'
+		this.description = 'Radio.'
 
 		this.guildOnly = true
 
@@ -42,22 +42,20 @@ class PlayCommand extends AbstractCommand
 						.setName(this.name)
 						.setDescription(this.description)
 
-					slashCommand.addStringOption(option => option
-							.setName('url')
-							.setDescription('Lien de la musique à jouer.')
-							.setRequired(false)
+					slashCommand.addSubcommand(subcommand => subcommand
+							.setName('play')
+							.setDescription('Joue une musique et l\'ajoute à la playlist.')
+							.addStringOption(option => option
+									.setName('url')
+									.setDescription('Lien de la musique à jouer.')
+									.setRequired(false)
+								)
 						)
 
 					return slashCommand
 				})())
 
-		// // RadioControlEmojis Components
-		// this.controlComponentsIds = []
-		// for (const control of Object.keys(RadioControlEmojis))
-		// {
-		// 	this.controlComponentsIds.push(`${this.id}:${control}`)
-		// }
-
+		// Message components
 		this.componentIds
 			.add(this.COMPONENT_PLAY)
 			.add(this.COMPONENT_PAUSE)
@@ -294,4 +292,4 @@ class PlayCommand extends AbstractCommand
 	}
 }
 
-export default PlayCommand
+export default RadioCommand
