@@ -9,6 +9,7 @@ import AbstractEntity from './AbstractEntity.js'
 type RadioUserPlayStatus =
 	'not_voice' |
 	'not_joinable' |
+	'different_voice' |
 	'playing' |
 	'queued_track' |
 	'new_player'
@@ -515,6 +516,10 @@ class Radio extends AbstractEntity
 			this.data.messageId = undefined
 			this.data.embedTitle = '📻 🎶  2GETHER Radio'
 			this.data.embedColor = '#0099ff'
+		}
+		else if (voiceChannel.id !== this.data.voiceChannelId)
+		{
+			return { status: 'different_voice' }
 		}
 
 		if (addTrackUrl)

@@ -91,6 +91,7 @@ class PlayCommand extends AbstractCommand
 						{
 							not_voice: 'Vous devez être dans un salon vocal pour jouer une musique.',
 							not_joinable: 'Je suis dans l\'incapacité de te rejoindre dans le salon vocal, désolé.',
+							different_voice: `Tu dois être dans le même salon vocal que moi pour jouer une musique.`,
 							playing: `Je suis déjà en train de jouer quelque chose !`,
 							queued_track: `J'ai ajouté ta musique à la playlist`,
 							new_player: 'C\'est bon !',
