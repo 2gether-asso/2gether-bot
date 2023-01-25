@@ -100,6 +100,35 @@ class Radio extends AbstractEntity
 		return this.messagePromise
 	}
 
+	protected async updateMessageOrCreate(messagePayload: Discord.BaseMessageOptions): Promise<Discord.Message<true>>
+	{
+		const message = await this.getMessage().catch(_ => undefined)
+		if (message)
+		{
+			return message.edit(messagePayload)
+				.catch(error =>
+					{
+						this.bot.logger.warn(`Failed to edit radio message`, 'Radio', error)
+						return Promise.reject('Failed to edit radio message')
+					})
+		}
+
+		return this.getTextChannel()
+			.then(channel => channel.send(messagePayload))
+			.then(message =>
+				{
+					this.data.messageId = message.id
+					this.state.save()
+
+					return message
+				})
+			.catch(error =>
+				{
+					this.bot.logger.warn(`Failed to send radio message`, 'Radio', error)
+					return Promise.reject('Failed to send radio message')
+				})
+	}
+
 	protected async clearMessage(): Promise<void>
 	{
 		await this.clearMessageEmbed()
@@ -569,19 +598,6 @@ class Radio extends AbstractEntity
 
 	public async updateMessageEmbed(): Promise<Discord.Message>
 	{
-		const message = await this.getMessage()
-			.catch((error) =>
-				{
-					this.bot.logger.warn(error, 'PlayCommand')
-					return undefined
-				})
-
-		if (!message)
-		{
-			this.bot.logger.error('No message to update', 'PlayCommand')
-			throw new Error('No message to update')
-		}
-
 		// Reset fields
 		this.embed.spliceFields(0, 25)
 
@@ -640,7 +656,7 @@ class Radio extends AbstractEntity
 			this.embed.setDescription(`${currentTrackTitle}${nextTrackTitle}`)
 		}
 
-		return message.edit({ embeds: [ this.embed ] })
+		return this.updateMessageOrCreate({ embeds: [ this.embed ] })
 	}
 
 	public async clearMessageEmbed(): Promise<Discord.Message>
