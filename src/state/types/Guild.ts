@@ -19,6 +19,11 @@ class Guild extends AbstractDBType
 	{
 		this.radio = new Radio(this)
 	}
+
+	public get id(): Discord.Snowflake
+	{
+		return this.#guildId
+	}
 }
 
 export default Guild
