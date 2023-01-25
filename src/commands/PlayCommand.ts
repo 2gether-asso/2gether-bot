@@ -61,18 +61,6 @@ class PlayCommand extends AbstractCommand
 	protected readonly COMPONENT_VOLUME_DOWN: RadioControlComponentId = `${this.id}:VOLUME_DOWN`
 	protected readonly COMPONENT_VOLUME_UP: RadioControlComponentId = `${this.id}:VOLUME_UP`
 
-	protected voiceChannel?: Discord.VoiceChannel | Discord.StageChannel
-
-	protected player?: AudioPlayer
-
-	// protected players: Map<string, AudioPlayer> = new Map<string, AudioPlayer>()
-
-	protected playerSubscription?: PlayerSubscription
-
-	protected playerEmbedUpdater?: NodeJS.Timeout
-
-	// protected isPlaying: boolean = false
-
 	public constructor(id: string, bot: Mel)
 	{
 		super(id, bot)
@@ -152,32 +140,25 @@ class PlayCommand extends AbstractCommand
 		const resourceUrl = interaction.options.get('url')?.value
 		if (resourceUrl && typeof resourceUrl === 'string')
 		{
-			if (this.player) // s.size > 0) // this.isPlaying)
+			const player = radio.getPlayer()
+			if (player)
 			{
 				// Add track to the queue
-				this.bot.logger.debug(`Push track to the queue: ${resourceUrl}`, 'PlayCommand')
-				radio.data.queue.push(resourceUrl)
-
-				// YTDL.getInfo(resourceUrl)
-				// 	.then(info =>
-				// 		{
-				// 			interaction.reply({
-				// 					content: `J'ai ajouté **${info.videoDetails.title}** à la playlist`,
-				// 					ephemeral: true,
-				// 				})
-				// 		})
+				this.bot.logger.debug(`Queue track: ${resourceUrl}`, 'PlayCommand')
+				radio.queueTrack(resourceUrl)
 			}
 			else
 			{
-				// Add track to play now
-				this.bot.logger.debug(`Unshift track to the queue: ${resourceUrl}`, 'PlayCommand')
-				radio.data.queue.unshift(resourceUrl)
+				// Add track to play next
+				this.bot.logger.debug(`Queue track first: ${resourceUrl}`, 'PlayCommand')
+				radio.queueTrackFirst(resourceUrl)
 			}
 		}
 
-		if (this.playerSubscription) // && this.isPlaying)
+		const playerSubscription = radio.getPlayerSubscription()
+		if (playerSubscription) // && this.isPlaying)
 		{
-			if (this.playerSubscription.player.state.status !== AudioPlayerStatus.Playing)
+			if (playerSubscription.player.state.status !== AudioPlayerStatus.Playing)
 			{
 				// this.player.play()
 				// interaction.reply(`Reprise de la lecture`, await getStatusEmbed())
@@ -339,18 +320,18 @@ class PlayCommand extends AbstractCommand
 
 	protected async componentPlayHandler(radio: Radio)
 	{
-		this.player ? this.player.unpause() : radio.playNext()
+		radio.play()
 	}
 
 	protected async componentPauseHandler(radio: Radio)
 	{
-		this.player && this.player.pause()
+		radio.pause()
 	}
 
 	protected async componentPreviousHandler(radio: Radio)
 	{
 		// Pop the history twice if a track is currently playing (the first popped track is the current track)
-		const popCount = this.player ? 2 : 1
+		const popCount = radio.isPlayer() ? 2 : 1
 
 		// Pop the history and add the popped tracks to the queue
 		for (let i = 0; i < popCount; ++i)
@@ -392,7 +373,7 @@ class PlayCommand extends AbstractCommand
 		// Clear the queue and history
 		// If playing, leave the playing track in the history, otherwise clear it entirely
 		radio.data.queue = []
-		radio.data.history = this.player && radio.data.history.length > 0 ? [radio.data.history[radio.data.history.length - 1]] : []
+		radio.data.history = radio.isPlayer() && radio.data.history.length > 0 ? [radio.data.history[radio.data.history.length - 1]] : []
 	}
 
 	protected async componentStopHandler(radio: Radio)

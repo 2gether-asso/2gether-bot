@@ -73,12 +73,12 @@ class Radio extends AbstractEntity
 		return !this.player || this.data.lastUpdateTime + 1200000 < Date.now()
 	}
 
-	public addTrack(resourceUrl: string): void
+	public queueTrack(resourceUrl: string): void
 	{
 		this.data.queue.push(resourceUrl)
 	}
 
-	public addNextTrack(resourceUrl: string): void
+	public queueTrackFirst(resourceUrl: string): void
 	{
 		this.data.queue.unshift(resourceUrl)
 	}
@@ -101,6 +101,11 @@ class Radio extends AbstractEntity
 	public clearHistory(): void
 	{
 		this.data.history = []
+	}
+
+	public isPlayer(): boolean
+	{
+		return this.player !== undefined
 	}
 
 	public getPlayer(): AudioPlayer
@@ -260,6 +265,11 @@ class Radio extends AbstractEntity
 		this.playNext()
 	}
 
+	public getPlayerSubscription(): PlayerSubscription | undefined
+	{
+		return this.playerSubscription
+	}
+
 	protected async getConnection(voiceChannel: Discord.VoiceBasedChannel | Discord.Snowflake | null | undefined): Promise<VoiceConnection | undefined>
 	protected async getConnection(voiceChannel: Discord.VoiceBasedChannel): Promise<VoiceConnection>
 	protected async getConnection(voiceChannel: Discord.Snowflake): Promise<VoiceConnection | undefined>
@@ -403,6 +413,16 @@ class Radio extends AbstractEntity
 		}
 
 		this.bot.logger.debug(`setVolume: Not playing`, 'PlayCommand')
+	}
+
+	public play(): void
+	{
+		this.player ? this.player.unpause() : this.playNext()
+	}
+
+	public pause(): void
+	{
+		this.player && this.player.pause()
 	}
 
 	public async playNext(): Promise<void>
