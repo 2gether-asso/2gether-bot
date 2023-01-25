@@ -74,6 +74,11 @@ class Radio extends AbstractDBType
         this.lastUpdateTime = 0 // Before everything
     }
 
+    public get guildId(): Discord.Snowflake
+    {
+        return this.#guild.id
+    }
+
 	public getEntity(bot: Mel): RadioEntity
 	{
         if (!this.#radioEntity)
