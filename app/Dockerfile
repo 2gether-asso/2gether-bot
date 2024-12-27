@@ -31,3 +31,63 @@ VOLUME /app
 COPY --link --chmod=755 ./docker/npm-entrypoint.sh /usr/local/bin/app-npm-entrypoint
 ENTRYPOINT [ "app-npm-entrypoint" ]
 CMD [ "--help" ]
+
+
+# --
+# Runtime base image
+
+FROM app_base AS app_runtime_base
+
+# Set runtime environment
+ENV APP_ENV=dev
+ENV NODE_ENV=development
+
+# Install dev dependencies, required for build
+RUN --mount=type=bind,source=./app/package.json,target=./package.json \
+	--mount=type=bind,source=./app/package-lock.json,target=./package-lock.json \
+	--mount=type=bind,source=./app/tsconfig.json,target=./tsconfig.json \
+	--mount=type=cache,target=~/.npm \
+	npm clean-install --include=dev
+
+# Copy application source code
+COPY --link ./app .
+
+
+# --
+# Dev image
+
+FROM app_runtime_base AS app_dev
+
+# Start development server
+CMD [ "npm", "run", "start-dev" ]
+
+
+# --
+# Prod build image
+
+FROM app_runtime_base AS app_prod_build
+
+# Set runtime environment
+ENV APP_ENV=prod
+ENV NODE_ENV=production
+
+# Build application
+RUN npm run build
+
+
+# --
+# Prod image
+
+FROM app_base AS app_prod
+
+# Set runtime environment
+ENV APP_ENV=prod
+ENV NODE_ENV=production
+
+# Copy built application files
+COPY --from=app_prod_build --link /app/package.json .
+COPY --from=app_prod_build --link /app/package-lock.json .
+COPY --from=app_prod_build --link /app/dist .
+
+# Start nginx server
+CMD [ "npm", "run", "start" ]

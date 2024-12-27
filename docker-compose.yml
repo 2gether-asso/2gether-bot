@@ -1,0 +1,16 @@
+# Services definition for building & deploying
+
+services:
+
+  app:
+    # Build
+    image: ${IMAGES_PREFIX:-app}:${IMAGES_TAG:-latest}
+    build:
+      context: ./app
+      dockerfile: ./Dockerfile
+      target: app_prod
+      args:
+        PORT: ${HTTP_DOCKER_PORT:-8080}
+    # Deploy
+    ports:
+      - "${HTTP_PORT:-80}:${HTTP_DOCKER_PORT:-8080}" # HTTP
