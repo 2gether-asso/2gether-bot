@@ -4,8 +4,9 @@
 	"description": "Multi-purpose Discord bot for the 2GETHER community",
 	"main": "dist/main.js",
 	"scripts": {
-		"start": "npx tsc && node .",
-		"prepare": "npx tsc",
+		"build": "npx tsc",
+		"start": "node .",
+		"start-dev": "npx tsc && node .",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"repository": "https://github.com/2gether-asso/2gether-bot",
