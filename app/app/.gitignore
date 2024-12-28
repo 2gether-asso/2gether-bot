@@ -1,0 +1,8 @@
+# NodeJS
+node_modules/
+
+# Project Files
+dist/
+config.json
+db.json*
+log.txt

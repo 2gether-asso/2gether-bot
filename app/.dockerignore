@@ -45,8 +45,11 @@ state.json*
 db.json*
 log.txt*
 
-# -- Specific to gitignore:
+# -- Specific to dockerignore:
 
-# Build configuration files (allow)
-!Dockerfile
-!Makefile
+# Docker configuration files
+Dockerfile
+docker-compose*.yml
+
+# Dotfiles
+.*

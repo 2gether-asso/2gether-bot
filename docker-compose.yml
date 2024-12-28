@@ -1,0 +1,32 @@
+# Services definition for building & deploying
+
+x-common:
+
+  app:
+    environment: &app_environment
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+      MEL_LOG_PATH: ${MEL_LOG_PATH:-}
+      MEL_LOG_FILE: ${MEL_LOG_FILE:-}
+      MEL_LOG_LEVEL: ${MEL_LOG_LEVEL:-}
+      MEL_STATE_PATH: ${MEL_STATE_PATH:-}
+      MEL_STATE_FILE: ${MEL_STATE_FILE:-}
+      MEL_TRANSLATIONS_DIR: ${MEL_TRANSLATIONS_DIR:-}
+      MEL_DEFAULT_LANGUAGE: ${MEL_DEFAULT_LANGUAGE:-}
+      MEL_COMMANDS_DIR: ${MEL_COMMANDS_DIR:-}
+      MEL_GLOBAL: ${MEL_GLOBAL:-}
+      MEL_GUILD_DEFAULT: ${MEL_GUILD_DEFAULT:-}
+      MEL_GUILDS: ${MEL_GUILDS:-}
+      MEL_SERVICES: ${MEL_SERVICES:-}
+
+services:
+
+  app:
+    # Build
+    image: ${IMAGES_PREFIX:-app}:${IMAGES_TAG:-latest}
+    build:
+      context: ./app
+      dockerfile: ./Dockerfile
+      target: app_prod
+    # Deploy
+    environment:
+      <<: [ *app_environment ]
