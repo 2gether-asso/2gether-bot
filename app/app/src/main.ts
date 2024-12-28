@@ -46,4 +46,4 @@ const bot = new Mel(
 const activityHooks = new ActivityHooks(bot)
 
 // Start the bot
-bot.start(LocalConfig.DISCORD_TOKEN)
+bot.start(LocalConfig.DISCORD_TOKEN ?? undefined)
