@@ -1,5 +1,11 @@
 # Services definition for building & deploying
 
+x-common:
+
+  app:
+    environment: &app_environment
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+
 services:
 
   app:
@@ -11,6 +17,10 @@ services:
       target: app_prod
       args:
         PORT: ${HTTP_DOCKER_PORT:-8080}
+        <<: [ *app_environment ]
+    # Deploy
+    environment:
+      <<: [ *app_environment ]
     # Deploy
     ports:
       - "${HTTP_PORT:-80}:${HTTP_DOCKER_PORT:-8080}" # HTTP
