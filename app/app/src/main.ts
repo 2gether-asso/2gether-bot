@@ -24,7 +24,7 @@ const bot = new Mel(
 		...(LocalConfig.MEL_GLOBAL !== null ? { global: LocalConfig.MEL_GLOBAL } : {}),
 		...(LocalConfig.MEL_GUILD_DEFAULT !== null ? { guildDefault: LocalConfig.MEL_GUILD_DEFAULT } : {}),
 		...(LocalConfig.MEL_GUILDS !== null ? { guilds: LocalConfig.MEL_GUILDS } : {}),
-		...(LocalConfig.MEL_SERVICES !== null ? { services: LocalConfig.MEL_SERVICES }
+		...(LocalConfig.MEL_SERVICES !== null ? { services: LocalConfig.MEL_SERVICES } : {}),
 	},
 	{
 		intents:
