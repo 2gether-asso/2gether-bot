@@ -13,6 +13,7 @@ Mel.Services.State = State
 const bot = new Mel(
 	{
 		absPath: path.dirname(__dirname),
+		configFile: undefined,
 		...(LocalConfig.MEL_LOG_PATH !== null ? { logPath: LocalConfig.MEL_LOG_PATH } : {}),
 		...(LocalConfig.MEL_LOG_FILE !== null ? { logFile: LocalConfig.MEL_LOG_FILE } : {}),
 		...(LocalConfig.MEL_LOG_LEVEL !== null ? { logLevel: LocalConfig.MEL_LOG_LEVEL } : {}),
