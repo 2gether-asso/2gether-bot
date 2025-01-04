@@ -18,6 +18,13 @@ FROM node_upstream AS app_base
 # Set app directory
 WORKDIR /app
 
+# Install build dependencies
+RUN --mount=type=cache,target=/var/cache/apt \
+	--mount=type=cache,target=/var/lib/apt \
+	apt-get update && \
+	apt-get install -y --no-install-recommends \
+		build-essential make libtool autoconf automake python3
+
 
 # --
 # Npm image
